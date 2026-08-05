@@ -1,0 +1,6 @@
+{
+  "name": "FinalPlayer",
+  "description": "Professional Android video player based on mpv engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
