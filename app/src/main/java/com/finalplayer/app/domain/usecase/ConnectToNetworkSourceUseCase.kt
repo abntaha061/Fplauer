@@ -1,13 +1,13 @@
 package com.finalplayer.app.domain.usecase
 
 import com.finalplayer.app.domain.model.NetworkSource
-import com.finalplayer.app.domain.model.VideoItem
+import com.finalplayer.app.domain.model.RemoteFile
 import com.finalplayer.app.domain.repository.NetworkSourceRepository
 
 class ConnectToNetworkSourceUseCase(
     private val networkSourceRepository: NetworkSourceRepository
 ) {
-    suspend operator fun invoke(source: NetworkSource, initialPath: String = "/"): Result<List<VideoItem>> {
+    suspend operator fun invoke(source: NetworkSource, initialPath: String = "/"): Result<List<RemoteFile>> {
         val testResult = networkSourceRepository.testConnection(source)
         if (testResult.isFailure) {
             return Result.failure(testResult.exceptionOrNull() ?: Exception("Connection test failed"))

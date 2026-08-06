@@ -28,6 +28,10 @@ class PlaybackRepositoryImpl(
         }
     }
 
+    override suspend fun removeFromHistory(videoId: String) {
+        playbackProgressDao.deleteProgress(videoId)
+    }
+
     override suspend fun clearHistory() {
         playbackProgressDao.clearAll()
     }

@@ -3,6 +3,7 @@ package com.finalplayer.app.data.repository
 import com.finalplayer.app.data.database.dao.VideoDao
 import com.finalplayer.app.data.mapper.toDomainModel
 import com.finalplayer.app.data.mapper.toVideoFolders
+import com.finalplayer.app.domain.model.SearchResults
 import com.finalplayer.app.domain.model.VideoFolder
 import com.finalplayer.app.domain.model.VideoItem
 import com.finalplayer.app.domain.repository.VideoRepository
@@ -29,6 +30,14 @@ class VideoRepositoryImpl(
     override fun getAllFolders(): Flow<List<VideoFolder>> {
         return videoDao.getAllVideos().map { entities ->
             entities.toVideoFolders()
+        }
+    }
+
+    override fun search(query: String): Flow<SearchResults> {
+        return videoDao.searchVideos("%$query%").map { entities ->
+            val videos = entities.map { it.toDomainModel() }
+            val folders = entities.toVideoFolders()
+            SearchResults(folders = folders, videos = videos, isEmpty = videos.isEmpty())
         }
     }
 

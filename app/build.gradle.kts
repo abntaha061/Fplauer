@@ -113,9 +113,11 @@ dependencies {
   implementation(libs.androidx.media)
   implementation(libs.androidx.documentfile)
   implementation(libs.androidx.datastore.preferences)
+  implementation(libs.androidx.constraintlayout.compose)
 
   // Permissions
   implementation(libs.accompanist.permissions)
+  implementation(libs.reorderable)
 
   // MPV Library
   implementation(libs.libmpv)
@@ -123,6 +125,10 @@ dependencies {
   // Coroutines
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
+
+  // Network Protocols (SMB & FTP)
+  implementation(libs.smbj)
+  implementation(libs.commons.net)
 
   // TODO: أضف ملف mpv aar هنا
   // implementation(files("libs/mpv-lib-release.aar"))

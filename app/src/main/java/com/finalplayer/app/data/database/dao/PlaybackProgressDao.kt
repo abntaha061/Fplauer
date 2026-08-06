@@ -18,6 +18,9 @@ interface PlaybackProgressDao {
     @Query("SELECT * FROM playback_progress ORDER BY lastPlayedTimestamp DESC LIMIT :limit")
     fun getRecentlyPlayed(limit: Int): Flow<List<PlaybackProgressEntity>>
 
+    @Query("DELETE FROM playback_progress WHERE videoId = :videoId")
+    suspend fun deleteProgress(videoId: String)
+
     @Query("DELETE FROM playback_progress")
     suspend fun clearAll()
 }

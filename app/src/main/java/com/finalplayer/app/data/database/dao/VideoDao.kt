@@ -12,6 +12,9 @@ interface VideoDao {
     @Query("SELECT * FROM videos ORDER BY title ASC")
     fun getAllVideos(): Flow<List<VideoEntity>>
 
+    @Query("SELECT * FROM videos WHERE id = :videoId")
+    suspend fun getVideoById(videoId: String): VideoEntity?
+
     @Query("SELECT * FROM videos WHERE folderPath = :folderPath ORDER BY title ASC")
     fun getVideosByFolder(folderPath: String): Flow<List<VideoEntity>>
 
@@ -26,4 +29,12 @@ interface VideoDao {
 
     @Query("SELECT DISTINCT folderPath FROM videos")
     fun getDistinctFolders(): Flow<List<String>>
+
+    @Query("""
+        SELECT * FROM videos 
+        WHERE title LIKE :query OR folderPath LIKE :query
+        ORDER BY title ASC
+        LIMIT 100
+    """)
+    fun searchVideos(query: String): Flow<List<VideoEntity>>
 }

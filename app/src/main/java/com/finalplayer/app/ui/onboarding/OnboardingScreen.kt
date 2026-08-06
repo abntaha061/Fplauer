@@ -41,6 +41,12 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
+import android.os.Environment
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.runtime.DisposableEffect
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun OnboardingScreen(
@@ -48,6 +54,7 @@ fun OnboardingScreen(
     onPermissionGranted: () -> Unit
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val permissionsList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         listOf(
@@ -64,10 +71,33 @@ fun OnboardingScreen(
         permissions = permissionsList
     )
 
+    fun isStoragePermissionGranted(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager() || permissionsState.allPermissionsGranted
+        } else {
+            permissionsState.allPermissionsGranted
+        }
+    }
+
     LaunchedEffect(permissionsState.allPermissionsGranted) {
-        if (permissionsState.allPermissionsGranted) {
+        if (isStoragePermissionGranted()) {
             viewModel.completeOnboarding()
             onPermissionGranted()
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (isStoragePermissionGranted()) {
+                    viewModel.completeOnboarding()
+                    onPermissionGranted()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
