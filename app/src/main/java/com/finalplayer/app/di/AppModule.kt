@@ -36,9 +36,6 @@ import org.koin.dsl.module
 val appModule = module {
     includes(preferencesModule)
 
-    // Preferences
-    single { OnboardingPreferences(androidContext()) }
-
     // Database & DAOs
     single {
         Room.databaseBuilder(

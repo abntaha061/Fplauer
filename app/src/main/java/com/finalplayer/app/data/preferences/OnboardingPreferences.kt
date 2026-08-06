@@ -1,28 +1,24 @@
 package com.finalplayer.app.data.preferences
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
-
-class OnboardingPreferences(private val context: Context) {
+class OnboardingPreferences(private val dataStore: DataStore<Preferences>) {
 
     companion object {
         private val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
     }
 
-    val hasCompletedOnboarding: Flow<Boolean> = context.dataStore.data.map { preferences ->
+    val hasCompletedOnboarding: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[HAS_COMPLETED_ONBOARDING] ?: false
     }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[HAS_COMPLETED_ONBOARDING] = completed
         }
     }

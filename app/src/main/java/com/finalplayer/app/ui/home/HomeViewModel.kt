@@ -23,8 +23,11 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private var hasAutoScanned = false
+
     init {
         observeFoldersAndSort()
+        refreshVideos()
     }
 
     private fun observeFoldersAndSort() {
@@ -38,13 +41,15 @@ class HomeViewModel(
                 sortPreferences.visibleFields.flow,
                 sortPreferences.onlyForFolderList.flow
             ) { args ->
-                val folders = args[0] as List<com.finalplayer.app.domain.model.VideoFolder>
-                val sortBy = args[1] as String
-                val ascending = args[2] as Boolean
-                val viewMode = args[3] as String
-                val layoutMode = args[4] as String
-                val fields = args[5] as Set<String>
-                val onlyFolderList = args[6] as Boolean
+                @Suppress("UNCHECKED_CAST")
+                val folders = args[0] as? List<com.finalplayer.app.domain.model.VideoFolder> ?: emptyList()
+                val sortBy = args[1] as? String ?: "title"
+                val ascending = args[2] as? Boolean ?: true
+                val viewMode = args[3] as? String ?: "folder"
+                val layoutMode = args[4] as? String ?: "list"
+                @Suppress("UNCHECKED_CAST")
+                val fields = args[5] as? Set<String> ?: emptySet()
+                val onlyFolderList = args[6] as? Boolean ?: false
 
                 val sorted = when (sortBy) {
                     "date" -> folders.sortedBy { it.path }
@@ -64,7 +69,8 @@ class HomeViewModel(
                 )
             }.collect { newState ->
                 _uiState.value = newState
-                if (newState.folders.isEmpty() && !_uiState.value.isLoading) {
+                if (newState.folders.isEmpty() && !_uiState.value.isLoading && !hasAutoScanned) {
+                    hasAutoScanned = true
                     refreshVideos()
                 }
             }
