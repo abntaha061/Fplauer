@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,23 +15,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ClosedCaptionDisabled
 import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material3.Badge
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,8 +39,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.finalplayer.app.ui.components.SidePanel
+import com.finalplayer.app.ui.components.thinScrollbar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubtitlesSheet(
     tracks: List<TrackNode>,
@@ -54,8 +53,6 @@ fun SubtitlesSheet(
     onRemoveSubtitle: ((Int) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
-
     val documentPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -64,16 +61,14 @@ fun SubtitlesSheet(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        modifier = Modifier.testTag("subtitles_bottom_sheet")
-    ) {
+    SidePanel(onDismissRequest = onDismiss, modifier = Modifier.testTag("subtitles_bottom_sheet")) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
+            val subTracks = tracks.filter { it.isSubtitle || it.type == "sub" }
+
             // Header: Title + Add File Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -81,7 +76,10 @@ fun SubtitlesSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "الترجمة",
+                    text = if (subTracks.isEmpty())
+                        "الترجمة"
+                    else
+                        "الترجمة (${subTracks.size})",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
 
@@ -163,24 +161,38 @@ fun SubtitlesSheet(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // Subtitle Tracks List
-            val subTracks = tracks.filter { it.isSubtitle || it.type == "sub" }
             if (subTracks.isEmpty()) {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp),
-                    contentAlignment = Alignment.Center
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    Icon(
+                        Icons.Default.ClosedCaptionDisabled,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Text(
-                        text = "لا توجد مسارات ترجمة مدمجة",
-                        style = MaterialTheme.typography.bodyMedium,
+                        "لا توجد ملفات ترجمة",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "استخدم + لإضافة ملف ترجمة خارجي",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
+                val listState = rememberLazyListState()
                 LazyColumn(
+                    state = listState,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .thinScrollbar(listState)
                 ) {
                     items(subTracks) { track ->
                         val isPrimary = selectedSubId == track.id
@@ -252,4 +264,3 @@ fun SubtitlesSheet(
         }
     }
 }
-

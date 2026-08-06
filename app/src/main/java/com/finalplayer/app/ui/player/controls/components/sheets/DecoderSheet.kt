@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,16 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.finalplayer.app.ui.components.SidePanel
 import com.finalplayer.app.ui.player.Decoder
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DecoderSheet(
     currentDecoder: Decoder,
     onSelect: (Decoder) -> Unit,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    SidePanel(onDismissRequest = onDismiss, scrollable = true) {
         Text(
             "جودة فك الترميز",
             style = MaterialTheme.typography.titleLarge,
@@ -57,8 +55,10 @@ fun DecoderSheet(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(decoder.displayName,
-                            style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            decoder.displayName,
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         Surface(
                             shape = RoundedCornerShape(4.dp),
                             color = badgeColor.copy(alpha = 0.15f)

@@ -41,6 +41,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import android.provider.MediaStore
+import java.io.File
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.math.abs
@@ -67,6 +69,7 @@ class PlayerViewModel(
     val appearancePrefs: AppearancePreferences? = null
 ) : ViewModel(), KoinComponent {
 
+    private val context: Context by inject()
     private val playbackRepository: PlaybackRepository by inject()
     private val playlistRepository: PlaylistRepository by inject()
 
@@ -439,6 +442,59 @@ class PlayerViewModel(
     fun closeSheet() {
         _sheetShown.update { Sheets.None }
         setControlsShown(true)
+    }
+
+    private val SUBTITLE_EXTENSIONS = setOf(
+        "srt", "ass", "ssa", "vtt", "sub", "idx",
+        "smi", "sup", "txt", "lrc"
+    )
+
+    fun autoLoadSubtitlesFromVideoFolder(videoUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val videoPath = when (videoUri.scheme) {
+                    "file" -> videoUri.path ?: return@launch
+                    "content" -> {
+                        context.contentResolver.query(
+                            videoUri,
+                            arrayOf(MediaStore.Video.Media.DATA),
+                            null, null, null
+                        )?.use { cursor ->
+                            if (cursor.moveToFirst()) {
+                                val col = cursor.getColumnIndexOrThrow(
+                                    MediaStore.Video.Media.DATA
+                                )
+                                cursor.getString(col)
+                            } else null
+                        } ?: return@launch
+                    }
+                    else -> videoUri.path ?: videoUri.toString()
+                }
+
+                val videoFile = File(videoPath)
+                val videoName = videoFile.nameWithoutExtension
+                val parentDir = videoFile.parentFile ?: return@launch
+
+                parentDir.listFiles()?.filter { file ->
+                    file.isFile &&
+                    file.extension.lowercase() in SUBTITLE_EXTENSIONS &&
+                    (
+                        file.nameWithoutExtension == videoName ||
+                        file.nameWithoutExtension.startsWith("$videoName.") ||
+                        file.nameWithoutExtension.startsWith("${videoName}_")
+                    )
+                }?.sortedBy { it.name }
+                 ?.forEach { subFile ->
+                    addSubtitle(
+                        uri = Uri.fromFile(subFile),
+                        context = context,
+                        select = false
+                    )
+                 }
+            } catch (e: Exception) {
+                Log.w("PlayerViewModel", "Auto subtitle scan failed", e)
+            }
+        }
     }
 
     fun addSubtitle(uri: Uri, context: Context, select: Boolean = true) {

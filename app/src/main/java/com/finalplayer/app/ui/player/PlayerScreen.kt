@@ -19,7 +19,6 @@ import com.finalplayer.app.player.PlayerViewModel
 import com.finalplayer.app.player.core.MPVView
 import com.finalplayer.app.ui.player.components.ResumeSnackbar
 import com.finalplayer.app.ui.player.controls.PlayerControls
-import com.finalplayer.app.ui.player.subtitle.SubtitleView
 
 @Composable
 fun PlayerScreen(
@@ -87,6 +86,7 @@ fun PlayerScreen(
         mpvView.onSurfaceReady = {
             if (videoPath.isNotEmpty()) {
                 viewModel.mpvController.play(videoPath)
+                viewModel.autoLoadSubtitlesFromVideoFolder(android.net.Uri.parse(videoPath))
             }
         }
 
@@ -102,11 +102,6 @@ fun PlayerScreen(
     ) {
         AndroidView(
             factory = { mpvView },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        SubtitleView(
-            subtitleText = currentSubText,
             modifier = Modifier.fillMaxSize()
         )
 

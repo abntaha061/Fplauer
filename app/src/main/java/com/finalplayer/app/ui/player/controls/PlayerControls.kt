@@ -73,6 +73,8 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.finalplayer.app.player.DoubleTapSeekState
 import com.finalplayer.app.player.SeekState
+import com.finalplayer.app.ui.components.FinalPlayerSeekbar
+import com.finalplayer.app.ui.components.SidePanel
 import com.finalplayer.app.ui.player.controls.components.BrightnessSlider
 import com.finalplayer.app.ui.player.controls.components.DoubleTapSeekOvals
 import com.finalplayer.app.ui.player.controls.components.SeekOverlay
@@ -474,8 +476,9 @@ fun PlayerControls(
                         val currentPos = if (isDraggingSlider) dragPositionSeconds else positionSeconds
                         val safeDuration = if (durationSeconds > 0f) durationSeconds else 1f
 
-                        Slider(
-                            value = currentPos.coerceIn(0f, safeDuration),
+                        FinalPlayerSeekbar(
+                            position = currentPos,
+                            duration = safeDuration,
                             onValueChange = { newValue ->
                                 isDraggingSlider = true
                                 dragPositionSeconds = newValue
@@ -484,12 +487,6 @@ fun PlayerControls(
                                 onSeekTo(dragPositionSeconds)
                                 isDraggingSlider = false
                             },
-                            valueRange = 0f..safeDuration,
-                            colors = SliderDefaults.colors(
-                                thumbColor = MaterialTheme.colorScheme.primary,
-                                activeTrackColor = MaterialTheme.colorScheme.primary,
-                                inactiveTrackColor = Color.White.copy(alpha = 0.3f)
-                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("player_seek_slider")
@@ -680,13 +677,9 @@ fun SleepTimerBottomSheet(
     onStartTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
     var selectedMinutes by remember { mutableIntStateOf(if (currentRemainingSeconds > 0) currentRemainingSeconds / 60 else 30) }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
+    SidePanel(onDismissRequest = onDismiss, scrollable = true) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -729,7 +722,27 @@ fun SleepTimerBottomSheet(
                     onValueChange = { selectedMinutes = it.toInt() },
                     valueRange = 5f..180f,
                     steps = 34,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(20.dp),
+                    track = { sliderState ->
+                        SliderDefaults.Track(
+                            sliderState = sliderState,
+                            modifier = Modifier.height(3.dp),
+                            thumbTrackGapSize = 0.dp,
+                            trackInsideCornerSize = 2.dp
+                        )
+                    },
+                    thumb = {
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    CircleShape
+                                )
+                        )
+                    }
                 )
 
                 IconButton(

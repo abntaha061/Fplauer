@@ -13,26 +13,24 @@ import androidx.compose.material.icons.filled.ClosedCaption
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.ZoomIn
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.finalplayer.app.ui.components.SidePanel
 import com.finalplayer.app.ui.player.Sheets
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreSheet(
     sleepTimerRemaining: Int = 0,
     onOpenSheet: (Sheets) -> Unit,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    SidePanel(onDismissRequest = onDismiss, scrollable = true) {
         Text(
             "المزيد",
             style = MaterialTheme.typography.titleLarge,

@@ -9,14 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,10 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.finalplayer.app.ui.components.SidePanel
+import com.finalplayer.app.ui.components.thinScrollbar
 import com.finalplayer.app.ui.player.ChapterNode
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChaptersSheet(
     chapters: List<ChapterNode>,
@@ -35,7 +35,7 @@ fun ChaptersSheet(
     onSeekToChapter: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    SidePanel(onDismissRequest = onDismiss) {
         Text(
             "الفصول (${chapters.size})",
             style = MaterialTheme.typography.titleLarge,
@@ -47,12 +47,20 @@ fun ChaptersSheet(
                 modifier = Modifier.fillMaxWidth().padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("لا توجد فصول في هذا الفيديو",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "لا توجد فصول في هذا الفيديو",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
-        LazyColumn {
+        val listState = rememberLazyListState()
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .thinScrollbar(listState)
+        ) {
             itemsIndexed(chapters) { index, chapter ->
                 val isCurrent = index == currentChapterIndex
                 ListItem(
