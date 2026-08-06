@@ -159,6 +159,7 @@ fun PlayerScreen(
             onSelectSubtitle = { trackId -> viewModel.toggleSubtitle(trackId) },
             onDisableSubtitles = { viewModel.disableSubtitles() },
             onAddExternalSubtitle = { uri -> viewModel.addSubtitle(uri, context) },
+            onRemoveSubtitle = { id -> viewModel.removeSubtitle(id) },
             onSelectAudioTrack = { id -> viewModel.selectAudioTrack(id) },
             onAddAudio = { uri -> viewModel.addAudio(uri, context) },
             onSelectDecoder = { dec -> viewModel.setDecoder(dec) },

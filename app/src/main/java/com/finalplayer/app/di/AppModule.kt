@@ -76,7 +76,7 @@ val appModule = module {
 
     // ViewModels
     viewModel { OnboardingViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { PlayerViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
     viewModel { NetworkBrowserViewModel(get(), get()) }

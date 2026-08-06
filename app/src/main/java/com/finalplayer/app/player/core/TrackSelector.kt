@@ -1,88 +1,226 @@
 package com.finalplayer.app.player.core
 
+import com.finalplayer.app.data.preferences.AudioPreferences
+import com.finalplayer.app.data.preferences.SubtitlesPreferences
 import com.finalplayer.app.ui.player.controls.components.sheets.TrackNode
-import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
-object TrackSelector {
+class TrackSelector(
+    private val subtitlePreferences: SubtitlesPreferences,
+    private val audioPreferences: AudioPreferences
+) {
+    companion object {
+        private val IGNORE_SUB_KEYWORDS = listOf(
+            "signs", "songs", "lyrics", "forced",
+            "sdh", "colored", "karaoke"
+        )
+        private val DIALOGUE_TITLE_KEYWORDS = listOf(
+            "subtitle", "subtitles", "full subtitle", "full sub",
+            "dialogue", "dialog", "translation", "english",
+            "main", "script", "full", "caption"
+        )
+    }
 
-    suspend fun selectBestSubtitleTrack(
+    suspend fun onFileLoaded(
+        hasState: Boolean = false,
+        mpvController: MPVController
+    ) = withContext(Dispatchers.Main) {
+        var attempts = 0
+        while (attempts < 20) {
+            val count = mpvController.getAttachedView()?.getPropertyInt("track-list/count") ?: 0
+            if (count > 0) break
+            delay(50)
+            attempts++
+        }
+
+        val trackCount = mpvController.getAttachedView()?.getPropertyInt("track-list/count") ?: 0
+        if (trackCount == 0) return@withContext
+
+        val tracks = readAllTracks(mpvController, trackCount)
+
+        if (tracks.none { it.isVideo }) return@withContext
+
+        selectBestAudioTrack(tracks, hasState, mpvController)
+        selectBestSubtitleTrack(tracks, hasState, mpvController)
+    }
+
+    private fun readAllTracks(mpvController: MPVController, count: Int): List<TrackNode> {
+        val view = mpvController.getAttachedView() ?: return emptyList()
+        return (0 until count).mapNotNull { i ->
+            val id = view.getPropertyInt("track-list/$i/id") ?: return@mapNotNull null
+            val type = view.getPropertyString("track-list/$i/type") ?: return@mapNotNull null
+            TrackNode(
+                id = id,
+                type = type,
+                lang = view.getPropertyString("track-list/$i/lang")?.lowercase() ?: "",
+                title = view.getPropertyString("track-list/$i/title")?.lowercase() ?: "",
+                isDefault = view.getPropertyString("track-list/$i/default") == "yes" ||
+                        (view.getTrackList().firstOrNull { it.id == id }?.isDefault == true),
+                forced = view.getPropertyString("track-list/$i/forced") == "yes",
+                hearingImpaired = view.getPropertyString("track-list/$i/hearing-impaired") == "yes",
+                external = view.getPropertyString("track-list/$i/external") == "yes",
+                externalFilename = view.getPropertyString("track-list/$i/external-filename"),
+                isImage = view.getPropertyString("track-list/$i/image") == "yes"
+            )
+        }
+    }
+
+    private suspend fun selectBestSubtitleTrack(
         tracks: List<TrackNode>,
-        audioTracks: List<TrackNode>,
-        fileName: String,
-        preferredLangs: List<String> = listOf("ara", "ar", "eng", "en")
-    ): TrackNode? {
-        val subTracks = tracks.filter { it.type == "sub" }
-        if (subTracks.isEmpty()) return null
+        hasState: Boolean,
+        mpvController: MPVController
+    ) {
+        val currentSid = mpvController.getCurrentSid()
 
-        // Pass 00: External Override
-        val externalTrack = subTracks.firstOrNull { it.external }
-        if (externalTrack != null) return externalTrack
+        if (!subtitlePreferences.autoEnableSubtitles.get()) {
+            if (currentSid > 0) mpvController.setPrimarySubtitle(0)
+            return
+        }
 
-        // Pass A: Anime Detection
-        val isAnime = isAnimeContent(audioTracks, fileName)
-        if (isAnime) {
-            val defaultJpnSub = subTracks.singleOrNull {
-                it.isDefault && (it.lang.equals("jpn", ignoreCase = true) || it.lang.equals("ja", ignoreCase = true))
+        if (hasState && currentSid >= 0) return
+
+        val subTracks = tracks.filter { it.isSubtitle }
+        if (subTracks.isEmpty()) return
+
+        val prefLangs = subtitlePreferences.preferredLanguages.get()
+            .split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+            .ifEmpty { listOf("eng", "en") }
+
+        // Pass 00: External subtitle first
+        subTracks.filter { it.external }.let { externals ->
+            if (externals.isNotEmpty()) {
+                val preferred = externals.firstOrNull { t ->
+                    prefLangs.any { t.lang == it || t.lang.startsWith(it) }
+                } ?: externals.firstOrNull { it.lang in setOf("", "und", "zxx") }
+                  ?: externals.first()
+                mpvController.setPrimarySubtitle(preferred.id)
+                return
             }
-            if (defaultJpnSub != null) return defaultJpnSub
+        }
 
-            val animeKeywords = listOf("dialogue", "full", "script")
-            val animeSub = subTracks.firstOrNull { track ->
-                val titleLower = track.title.lowercase(Locale.ROOT)
-                val langMatches = preferredLangs.any { pref -> track.lang.equals(pref, ignoreCase = true) }
-                langMatches && animeKeywords.any { kw -> titleLower.contains(kw) }
+        // Pass A0: Anime — single default Japanese track
+        if (isAnimeContent(tracks, mpvController)) {
+            val defaultTracks = subTracks.filter { it.isDefault }
+            if (defaultTracks.size == 1 &&
+                defaultTracks[0].lang in listOf("jpn", "ja", "jp")
+            ) {
+                mpvController.setPrimarySubtitle(defaultTracks[0].id)
+                return
             }
-            if (animeSub != null) return animeSub
         }
 
-        // Pass B: Clean Match
-        val forbiddenKeywords = listOf("signs", "songs", "lyrics", "forced", "sdh", "colored")
-        val cleanMatch = subTracks.firstOrNull { track ->
-            val titleLower = track.title.lowercase(Locale.ROOT)
-            val matchesLang = preferredLangs.any { pref -> track.lang.equals(pref, ignoreCase = true) }
-            val hasForbiddenKeyword = forbiddenKeywords.any { kw -> titleLower.contains(kw) }
-            matchesLang && !hasForbiddenKeyword && !track.forced
+        // Pass A: Anime — dialogue track in preferred language
+        if (isAnimeContent(tracks, mpvController)) {
+            for (lang in prefLangs) {
+                val track = subTracks.firstOrNull { t ->
+                    (t.lang == lang || t.lang.startsWith(lang)) &&
+                    (t.title.contains("dialogue") ||
+                     t.title.contains("full") ||
+                     t.title.contains("script"))
+                }
+                if (track != null) {
+                    mpvController.setPrimarySubtitle(track.id)
+                    return
+                }
+            }
         }
-        if (cleanMatch != null) return cleanMatch
 
-        // Pass C: Last Resort
-        val lastResort = subTracks.firstOrNull { track ->
-            preferredLangs.any { pref -> track.lang.equals(pref, ignoreCase = true) }
+        // Pass B: Clean match in preferred language
+        for (lang in prefLangs) {
+            val track = subTracks.firstOrNull { t ->
+                (t.lang == lang || t.lang.startsWith(lang)) &&
+                IGNORE_SUB_KEYWORDS.none { kw -> t.title.contains(kw) } &&
+                !t.forced && !t.hearingImpaired
+            }
+            if (track != null) {
+                mpvController.setPrimarySubtitle(track.id)
+                return
+            }
         }
-        if (lastResort != null) return lastResort
 
-        // Pass D: Title-Name Fallback
-        val titleKeywords = listOf("subtitle", "subtitles", "english", "arabic", "dialogue", "full", "translation")
-        val titleFallback = subTracks.firstOrNull { track ->
-            val langEmptyOrUnknown = track.lang.isEmpty() ||
-                    track.lang.equals("und", ignoreCase = true) ||
-                    track.lang.equals("zxx", ignoreCase = true)
-            val titleLower = track.title.lowercase(Locale.ROOT)
-            langEmptyOrUnknown && titleKeywords.any { kw -> titleLower.contains(kw) }
+        // Pass C: Any track in preferred language
+        for (lang in prefLangs) {
+            val track = subTracks.firstOrNull { t ->
+                t.lang == lang || t.lang.startsWith(lang)
+            }
+            if (track != null) {
+                mpvController.setPrimarySubtitle(track.id)
+                return
+            }
         }
-        if (titleFallback != null) return titleFallback
 
-        // Pass E: Single Clean Track
-        val cleanTracks = subTracks.filter { track ->
-            val titleLower = track.title.lowercase(Locale.ROOT)
-            !forbiddenKeywords.any { kw -> titleLower.contains(kw) }
+        // Pass D: Title match (lang=und/empty)
+        val unknownLangs = setOf("", "und", "zxx")
+        val byTitle = subTracks.firstOrNull { t ->
+            t.lang in unknownLangs &&
+            DIALOGUE_TITLE_KEYWORDS.any { kw -> t.title.contains(kw) } &&
+            IGNORE_SUB_KEYWORDS.none { kw -> t.title.contains(kw) } &&
+            !t.forced && !t.hearingImpaired
+        }
+        if (byTitle != null) {
+            mpvController.setPrimarySubtitle(byTitle.id)
+            return
+        }
+
+        // Pass E: Single clean track
+        val cleanTracks = subTracks.filter { t ->
+            IGNORE_SUB_KEYWORDS.none { kw -> t.title.contains(kw) } &&
+            !t.forced && !t.hearingImpaired
         }
         if (cleanTracks.size == 1) {
-            return cleanTracks.first()
+            mpvController.setPrimarySubtitle(cleanTracks[0].id)
         }
-
-        return null
     }
 
-    private fun isAnimeContent(audioTracks: List<TrackNode>, fileName: String): Boolean {
-        val hasJpnAudio = audioTracks.any {
-            it.lang.equals("jpn", ignoreCase = true) ||
-                    it.lang.equals("ja", ignoreCase = true) ||
-                    it.title.lowercase(Locale.ROOT).contains("japanese")
-        }
-        val hasBrackets = fileName.contains("[") && fileName.contains("]")
-        val hasChecksumHex = Regex("\\[[0-9A-Fa-f]{8}\\]").containsMatchIn(fileName)
+    private suspend fun selectBestAudioTrack(
+        tracks: List<TrackNode>,
+        hasState: Boolean,
+        mpvController: MPVController
+    ) {
+        val currentAid = mpvController.getCurrentAid()
+        if (hasState && currentAid > 0) return
 
-        return hasJpnAudio || hasBrackets || hasChecksumHex
+        val prefLangs = audioPreferences.preferredLanguages.get()
+            .split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+
+        val audioTracks = tracks.filter { it.isAudio }
+        val ignoreKeywords = listOf("commentary", "description", "adh", "comment")
+
+        if (prefLangs.isNotEmpty()) {
+            for (lang in prefLangs) {
+                val track = audioTracks.firstOrNull { t ->
+                    (t.lang == lang || t.lang.startsWith(lang)) &&
+                    ignoreKeywords.none { kw -> t.title.contains(kw) }
+                }
+                if (track != null) {
+                    if (currentAid != track.id) mpvController.selectAudioTrack(track.id)
+                    return
+                }
+            }
+        }
+
+        if (currentAid <= 0) {
+            val fallback = audioTracks.firstOrNull { t ->
+                ignoreKeywords.none { kw -> t.title.contains(kw) }
+            }
+            fallback?.let { mpvController.selectAudioTrack(it.id) }
+        }
+    }
+
+    private fun isAnimeContent(tracks: List<TrackNode>, mpvController: MPVController): Boolean {
+        val view = mpvController.getAttachedView()
+        val path = view?.getPropertyString("path") ?: ""
+        val title = view?.getPropertyString("media-title") ?: ""
+        val filename = view?.getPropertyString("filename") ?: ""
+
+        val hasJapaneseAudio = tracks.any { it.isAudio && it.lang in listOf("jpn", "ja") }
+        val hasCrcHash = Regex("\\[[0-9a-fA-F]{8}\\]").containsMatchIn(filename)
+        val hasFansubBrackets = Regex("\\[.*\\]").containsMatchIn(title)
+        val isAnimeFolder = path.lowercase().contains("/anime/")
+
+        return hasJapaneseAudio || hasCrcHash || hasFansubBrackets || isAnimeFolder
     }
 }
+

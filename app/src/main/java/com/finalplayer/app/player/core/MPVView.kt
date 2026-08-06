@@ -193,10 +193,17 @@ class MPVView @JvmOverloads constructor(
     fun applySubtitleOptions() {
         setOptionString("slang", "")
         setOptionString("sub-auto", "no")
+        setOptionString("subs-fallback", "no")
+        setOptionString("sub-file-paths", "")
+
         setOptionString("sub-codepage", "auto")
         setOptionString("embeddedfonts", "yes")
         setOptionString("sub-font-provider", "auto")
+
         setOptionString("sub-ass-override", "scale")
+        setOptionString("sub-font-size", "55")
+        setOptionString("sub-pos", "100")
+        setOptionString("sub-border-size", "3")
     }
 
     fun getPropertyString(name: String): String? {

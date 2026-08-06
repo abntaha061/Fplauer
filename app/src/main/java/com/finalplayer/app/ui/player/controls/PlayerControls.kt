@@ -1,7 +1,10 @@
 package com.finalplayer.app.ui.player.controls
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import com.finalplayer.app.ui.player.ChapterNode
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -78,7 +81,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import com.finalplayer.app.ui.player.Decoder
 import com.finalplayer.app.ui.player.Sheets
 import com.finalplayer.app.ui.player.controls.components.sheets.AudioTracksSheet
-import com.finalplayer.app.ui.player.controls.components.sheets.ChapterNode
 import com.finalplayer.app.ui.player.controls.components.sheets.ChaptersSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.DecoderSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.MoreSheet
@@ -133,6 +135,7 @@ fun PlayerControls(
     onSelectSubtitle: (Int) -> Unit = {},
     onDisableSubtitles: () -> Unit = {},
     onAddExternalSubtitle: (Uri) -> Unit = {},
+    onRemoveSubtitle: (Int) -> Unit = {},
     onSelectAudioTrack: (Int) -> Unit = {},
     onAddAudio: (Uri) -> Unit = {},
     onSelectDecoder: (Decoder) -> Unit = {},
@@ -545,6 +548,12 @@ fun PlayerControls(
         }
     }
 
+    val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            onAddAudio(uri)
+        }
+    }
+
     when (sheetShown) {
         is Sheets.SubtitleTracks -> {
             SubtitlesSheet(
@@ -563,20 +572,20 @@ fun PlayerControls(
                     onAddExternalSubtitle(uri)
                     onCloseSheet()
                 },
+                onRemoveSubtitle = onRemoveSubtitle,
                 onDismiss = onCloseSheet
             )
         }
         is Sheets.AudioTracks -> {
             AudioTracksSheet(
                 tracks = audioTracks,
-                selectedAudioId = selectedAudioId,
-                onSelectAudioTrack = { id ->
+                currentAudioId = selectedAudioId ?: 0,
+                onSelectAudio = { id ->
                     onSelectAudioTrack(id)
                     onCloseSheet()
                 },
-                onAddAudio = { uri ->
-                    onAddAudio(uri)
-                    onCloseSheet()
+                onAddAudioFile = {
+                    audioPicker.launch(arrayOf("audio/*", "video/*", "*/*"))
                 },
                 onDismiss = onCloseSheet
             )
@@ -584,7 +593,7 @@ fun PlayerControls(
         is Sheets.Decoders -> {
             DecoderSheet(
                 currentDecoder = currentDecoder,
-                onSelectDecoder = { dec ->
+                onSelect = { dec ->
                     onSelectDecoder(dec)
                     onCloseSheet()
                 },
@@ -604,7 +613,7 @@ fun PlayerControls(
             ChaptersSheet(
                 chapters = chapters,
                 currentChapterIndex = currentChapterIndex,
-                onSelectChapter = { idx ->
+                onSeekToChapter = { idx ->
                     onSelectChapter(idx)
                     onCloseSheet()
                 },
@@ -613,6 +622,7 @@ fun PlayerControls(
         }
         is Sheets.More -> {
             MoreSheet(
+                sleepTimerRemaining = remainingSleepTimerSeconds,
                 onOpenSheet = onOpenSheet,
                 onDismiss = onCloseSheet
             )
@@ -643,7 +653,7 @@ fun PlayerControls(
                 }
             )
         }
-        is Sheets.None -> {
+        else -> {
             if (showSleepTimerSheet) {
                 SleepTimerBottomSheet(
                     currentRemainingSeconds = remainingSleepTimerSeconds,

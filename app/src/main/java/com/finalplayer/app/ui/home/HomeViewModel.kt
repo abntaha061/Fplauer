@@ -3,9 +3,12 @@ package com.finalplayer.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.finalplayer.app.data.preferences.SortPreferences
+import com.finalplayer.app.domain.model.VideoItem
 import com.finalplayer.app.domain.repository.VideoRepository
 import com.finalplayer.app.domain.usecase.GetVideoLibraryUseCase
+import com.finalplayer.app.domain.usecase.GetVideosByFolderUseCase
 import com.finalplayer.app.domain.usecase.ScanForVideosUseCase
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +19,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val getVideoLibraryUseCase: GetVideoLibraryUseCase,
     private val scanForVideosUseCase: ScanForVideosUseCase,
+    private val getVideosByFolderUseCase: GetVideosByFolderUseCase,
     private val videoRepository: VideoRepository,
     private val sortPreferences: SortPreferences
 ) : ViewModel() {
@@ -116,6 +120,10 @@ class HomeViewModel(
 
     fun selectTab(tab: HomeTab) {
         _uiState.update { it.copy(selectedTab = tab) }
+    }
+
+    fun getVideosInFolder(folderPath: String): Flow<List<VideoItem>> {
+        return getVideosByFolderUseCase(folderPath)
     }
 }
 

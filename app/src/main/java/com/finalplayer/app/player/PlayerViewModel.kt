@@ -17,9 +17,9 @@ import com.finalplayer.app.data.preferences.PlayerPreferences
 import com.finalplayer.app.data.preferences.SubtitlesPreferences
 import com.finalplayer.app.player.core.MPVController
 import com.finalplayer.app.player.core.TrackSelector
+import com.finalplayer.app.ui.player.ChapterNode
 import com.finalplayer.app.ui.player.Decoder
 import com.finalplayer.app.ui.player.Sheets
-import com.finalplayer.app.ui.player.controls.components.sheets.ChapterNode
 import com.finalplayer.app.ui.player.controls.components.sheets.TrackNode
 import com.finalplayer.app.domain.model.PlaybackProgress
 import com.finalplayer.app.domain.model.VideoItem
@@ -29,12 +29,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.math.abs
@@ -63,6 +69,14 @@ class PlayerViewModel(
 
     private val playbackRepository: PlaybackRepository by inject()
     private val playlistRepository: PlaylistRepository by inject()
+
+    private val trackSelector: TrackSelector? by lazy {
+        if (subtitlesPrefs != null && audioPrefs != null) {
+            TrackSelector(subtitlesPrefs, audioPrefs)
+        } else null
+    }
+
+    private val subtitleAddMutex = Mutex()
 
     private val _paused = MutableStateFlow<Boolean?>(false)
     val paused: StateFlow<Boolean?> = _paused.asStateFlow()
@@ -123,6 +137,9 @@ class PlayerViewModel(
 
     private val _selectedAudioId = MutableStateFlow<Int?>(0)
     val selectedAudioId: StateFlow<Int?> = _selectedAudioId.asStateFlow()
+    val currentAudioId: StateFlow<Int> = _selectedAudioId
+        .map { it ?: 0 }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     private val _currentDecoder = MutableStateFlow(Decoder.HW_PLUS)
     val currentDecoder: StateFlow<Decoder> = _currentDecoder.asStateFlow()
@@ -135,6 +152,7 @@ class PlayerViewModel(
 
     private val _currentChapterIndex = MutableStateFlow<Int?>(null)
     val currentChapterIndex: StateFlow<Int?> = _currentChapterIndex.asStateFlow()
+    val currentChapter: StateFlow<Int?> = _currentChapterIndex.asStateFlow()
 
     private val _sheetShown = MutableStateFlow<Sheets>(Sheets.None)
     val sheetShown: StateFlow<Sheets> = _sheetShown.asStateFlow()
@@ -358,14 +376,7 @@ class PlayerViewModel(
         if (!hasAttemptedAutoSelectSub && subs.isNotEmpty()) {
             hasAttemptedAutoSelectSub = true
             viewModelScope.launch {
-                val bestTrack = TrackSelector.selectBestSubtitleTrack(
-                    tracks = subs,
-                    audioTracks = audios,
-                    fileName = _videoTitle.value
-                )
-                if (bestTrack != null) {
-                    toggleSubtitle(bestTrack.id)
-                }
+                trackSelector?.onFileLoaded(false, mpvController)
             }
         }
     }
@@ -395,9 +406,14 @@ class PlayerViewModel(
         _currentDecoder.value = decoder
     }
 
+    fun updateDecoder(decoder: Decoder) {
+        setDecoder(decoder)
+    }
+
     fun setPlaybackSpeed(speed: Float) {
-        mpvController.setPlaybackSpeed(speed)
-        _playbackSpeed.value = speed
+        val rounded = (speed.coerceIn(0.25f, 4.0f) * 100).toInt() / 100f
+        mpvController.setPlaybackSpeed(rounded)
+        _playbackSpeed.value = rounded
     }
 
     fun selectChapter(index: Int) {
@@ -405,30 +421,63 @@ class PlayerViewModel(
         _currentChapterIndex.value = index
     }
 
+    fun seekToChapter(index: Int) {
+        selectChapter(index)
+        unpause()
+    }
+
+    fun unpause() {
+        mpvController.resume()
+        _paused.value = false
+    }
+
     fun openSheet(sheet: Sheets) {
-        _sheetShown.value = sheet
+        _sheetShown.update { sheet }
+        if (sheet != Sheets.None) setControlsShown(false)
     }
 
     fun closeSheet() {
-        _sheetShown.value = Sheets.None
+        _sheetShown.update { Sheets.None }
+        setControlsShown(true)
     }
 
     fun addSubtitle(uri: Uri, context: Context, select: Boolean = true) {
-        try {
-            context.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-        } catch (e: Exception) {
-            Log.e("PlayerViewModel", "Could not take persistable permission", e)
-        }
+        viewModelScope.launch(Dispatchers.IO) {
+            subtitleAddMutex.withLock {
+                val subPath = uri.toString()
+                if (_externalSubtitles.contains(subPath)) return@withLock
 
-        val subPath = uri.toString()
-        mpvController.addSubtitle(subPath, select)
-        if (!_externalSubtitles.contains(subPath)) {
-            _externalSubtitles.add(subPath)
+                if (uri.scheme == "content") {
+                    try {
+                        context.contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                    } catch (e: Exception) {
+                        Log.e("PlayerViewModel", "Could not take persistable permission", e)
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    mpvController.addSubtitle(subPath, select)
+                    updateTracks()
+                }
+                _externalSubtitles.add(subPath)
+            }
         }
+    }
+
+    fun removeSubtitle(id: Int) {
+        mpvController.getAttachedView()?.command(arrayOf("sub-remove", id.toString()))
         updateTracks()
+    }
+
+    fun onVideoFileLoaded(hasState: Boolean = false) {
+        hasAttemptedAutoSelectSub = false
+        viewModelScope.launch {
+            trackSelector?.onFileLoaded(hasState, mpvController)
+            updateTracks()
+        }
     }
 
     fun toggleSubtitle(id: Int) {

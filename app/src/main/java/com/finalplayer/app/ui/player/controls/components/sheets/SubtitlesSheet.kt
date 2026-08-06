@@ -19,11 +19,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
@@ -49,6 +51,7 @@ fun SubtitlesSheet(
     onSelectSubtitle: (Int) -> Unit,
     onDisableSubtitles: () -> Unit,
     onAddExternalSubtitle: (Uri) -> Unit,
+    onRemoveSubtitle: ((Int) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -99,7 +102,7 @@ fun SubtitlesSheet(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = null,
+                        contentDescription = "إضافة ملف ترجمة",
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -160,7 +163,7 @@ fun SubtitlesSheet(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // Subtitle Tracks List
-            val subTracks = tracks.filter { it.type == "sub" }
+            val subTracks = tracks.filter { it.isSubtitle || it.type == "sub" }
             if (subTracks.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -200,14 +203,8 @@ fun SubtitlesSheet(
                             Spacer(modifier = Modifier.width(12.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
-                                val trackTitle = when {
-                                    track.title.isNotBlank() -> track.title
-                                    track.lang.isNotBlank() -> track.lang.uppercase()
-                                    else -> "مسار ${track.id}"
-                                }
-
                                 Text(
-                                    text = trackTitle,
+                                    text = track.displayName,
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
@@ -222,13 +219,28 @@ fun SubtitlesSheet(
                                 }
                             }
 
-                            if (isPrimary) {
-                                Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                                    Text("P", color = Color.White, fontWeight = FontWeight.Bold)
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                if (isPrimary) {
+                                    Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                                        Text("P", color = Color.White, fontWeight = FontWeight.Bold)
+                                    }
+                                } else if (isSecondary) {
+                                    Badge(containerColor = MaterialTheme.colorScheme.secondary) {
+                                        Text("S", color = Color.White, fontWeight = FontWeight.Bold)
+                                    }
                                 }
-                            } else if (isSecondary) {
-                                Badge(containerColor = MaterialTheme.colorScheme.secondary) {
-                                    Text("S", color = Color.White, fontWeight = FontWeight.Bold)
+
+                                if (track.external && onRemoveSubtitle != null) {
+                                    IconButton(
+                                        onClick = { onRemoveSubtitle(track.id) },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "حذف",
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -240,3 +252,4 @@ fun SubtitlesSheet(
         }
     }
 }
+

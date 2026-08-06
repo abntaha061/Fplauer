@@ -1,6 +1,7 @@
 package com.finalplayer.app
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,13 +12,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.finalplayer.app.player.PlayerActivity
 import com.finalplayer.app.ui.about.AboutScreen
 import com.finalplayer.app.ui.about.LibrariesScreen
 import com.finalplayer.app.ui.browser.NetworkBrowserScreen
+import com.finalplayer.app.ui.home.FolderDetailScreen
 import com.finalplayer.app.ui.home.HomeScreen
 import com.finalplayer.app.ui.home.HomeViewModel
 import com.finalplayer.app.ui.onboarding.OnboardingScreen
@@ -81,7 +85,8 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(
                                 viewModel = homeViewModel,
                                 onFolderClick = { folderPath ->
-                                    openPlayer(folderPath, "Folder Video")
+                                    val encoded = Uri.encode(folderPath)
+                                    navController.navigate("folder_detail/$encoded")
                                 },
                                 onPlaylistClick = { playlist ->
                                     openPlaylistPlayer(playlist.id)
@@ -92,7 +97,8 @@ class MainActivity : ComponentActivity() {
                                 onPlayButtonClick = {
                                     val firstFolder = homeViewModel.uiState.value.folders.firstOrNull()
                                     if (firstFolder != null) {
-                                        openPlayer(firstFolder.path, firstFolder.name)
+                                        val encoded = Uri.encode(firstFolder.path)
+                                        navController.navigate("folder_detail/$encoded")
                                     } else {
                                         openPlayer("", "Demo Video")
                                     }
@@ -109,6 +115,21 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        composable(
+                            route = "folder_detail/{folderPath}",
+                            arguments = listOf(navArgument("folderPath") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val folderPath = Uri.decode(backStackEntry.arguments?.getString("folderPath") ?: "")
+                            FolderDetailScreen(
+                                folderPath = folderPath,
+                                viewModel = homeViewModel,
+                                onVideoClick = { video ->
+                                    openPlayer(video.uri, video.title)
+                                },
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+
                         composable("search") {
                             SearchScreen(
                                 onBack = { navController.popBackStack() },
@@ -116,7 +137,8 @@ class MainActivity : ComponentActivity() {
                                     openPlayer(videoId, title)
                                 },
                                 onFolderClick = { folderPath ->
-                                    openPlayer(folderPath, "Folder Video")
+                                    val encoded = Uri.encode(folderPath)
+                                    navController.navigate("folder_detail/$encoded")
                                 }
                             )
                         }

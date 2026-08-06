@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class Preference<T>(
@@ -14,6 +15,8 @@ class Preference<T>(
     val flow: Flow<T> = dataStore.data.map { preferences ->
         preferences[key] ?: defaultValue
     }
+
+    suspend fun get(): T = flow.first()
 
     suspend fun set(value: T) {
         dataStore.edit { preferences ->
