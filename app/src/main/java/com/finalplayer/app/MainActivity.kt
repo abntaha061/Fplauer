@@ -3,6 +3,7 @@ package com.finalplayer.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Base64
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -32,6 +33,18 @@ import com.finalplayer.app.ui.theme.FinalPlayerTheme
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
+
+    private fun encodeNavPath(path: String): String {
+        return Base64.encodeToString(path.toByteArray(Charsets.UTF_8), Base64.NO_WRAP or Base64.URL_SAFE)
+    }
+
+    private fun decodeNavPath(encoded: String): String {
+        return try {
+            String(Base64.decode(encoded, Base64.NO_WRAP or Base64.URL_SAFE), Charsets.UTF_8)
+        } catch (e: Exception) {
+            Uri.decode(encoded)
+        }
+    }
 
     private fun openPlayer(path: String, title: String) {
         val intent = Intent(this, PlayerActivity::class.java).apply {
@@ -91,7 +104,7 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(
                                 viewModel = homeViewModel,
                                 onFolderClick = { folderPath ->
-                                    val encoded = Uri.encode(folderPath)
+                                    val encoded = encodeNavPath(folderPath)
                                     navController.navigate("folder_detail/$encoded")
                                 },
                                 onPlaylistClick = { playlist ->
@@ -103,7 +116,7 @@ class MainActivity : ComponentActivity() {
                                 onPlayButtonClick = {
                                     val firstFolder = homeViewModel.uiState.value.folders.firstOrNull()
                                     if (firstFolder != null) {
-                                        val encoded = Uri.encode(firstFolder.path)
+                                        val encoded = encodeNavPath(firstFolder.path)
                                         navController.navigate("folder_detail/$encoded")
                                     } else {
                                         openPlayer("", "Demo Video")
@@ -125,7 +138,8 @@ class MainActivity : ComponentActivity() {
                             route = "folder_detail/{folderPath}",
                             arguments = listOf(navArgument("folderPath") { type = NavType.StringType })
                         ) { backStackEntry ->
-                            val folderPath = Uri.decode(backStackEntry.arguments?.getString("folderPath") ?: "")
+                            val rawArg = backStackEntry.arguments?.getString("folderPath") ?: ""
+                            val folderPath = decodeNavPath(rawArg)
                             FolderDetailScreen(
                                 folderPath = folderPath,
                                 viewModel = homeViewModel,
@@ -143,7 +157,7 @@ class MainActivity : ComponentActivity() {
                                     openPlayer(videoId, title)
                                 },
                                 onFolderClick = { folderPath ->
-                                    val encoded = Uri.encode(folderPath)
+                                    val encoded = encodeNavPath(folderPath)
                                     navController.navigate("folder_detail/$encoded")
                                 }
                             )
