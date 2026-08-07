@@ -73,12 +73,17 @@ import com.finalplayer.app.ui.settings.tabs.PlayerSettingsTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
-    var currentSubScreen by remember { mutableStateOf<String?>(null) }
+fun SettingsScreen(
+    onBack: () -> Unit,
+    initialSubScreen: String? = null
+) {
+    var currentSubScreen by remember { mutableStateOf<String?>(initialSubScreen) }
 
     BackHandler(enabled = currentSubScreen != null) {
         if (currentSubScreen in listOf("edit_top_right", "edit_bottom_right", "edit_bottom_left", "edit_portrait_bottom", "edit_controls_tab")) {
             currentSubScreen = "player_layout"
+        } else if (currentSubScreen == "libraries") {
+            currentSubScreen = "about"
         } else {
             currentSubScreen = null
         }

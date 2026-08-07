@@ -371,6 +371,35 @@ class PlayerViewModel(
                     mpvController.setPropertyInt("audio-delay", delay)
                 }
             }
+            viewModelScope.launch {
+                prefs.audioPitchCorrection.changes().collect { pitchCorr ->
+                    mpvController.setPropertyString("audio-pitch-correction", if (pitchCorr) "yes" else "no")
+                }
+            }
+            viewModelScope.launch {
+                prefs.volumeNormalization.changes().collect { norm ->
+                    mpvController.setPropertyString("af", if (norm) "dynaudnorm" else "")
+                }
+            }
+            viewModelScope.launch {
+                prefs.preferredLanguages.changes().collect { langs ->
+                    if (langs.isNotBlank()) {
+                        mpvController.setPropertyString("alang", langs)
+                    }
+                }
+            }
+            viewModelScope.launch {
+                prefs.audioChannels.changes().collect { channels ->
+                    if (channels.isNotBlank()) {
+                        mpvController.setPropertyString("audio-channels", channels)
+                    }
+                }
+            }
+            viewModelScope.launch {
+                prefs.volumeBoostCap.changes().collect { cap ->
+                    mpvController.setPropertyInt("volume-max", 100 + cap)
+                }
+            }
         }
         decoderPrefs?.let { prefs ->
             viewModelScope.launch {

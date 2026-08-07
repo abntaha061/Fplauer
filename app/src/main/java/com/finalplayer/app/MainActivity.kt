@@ -152,22 +152,32 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable("settings") {
+                        composable(
+                            route = "settings?sub={sub}",
+                            arguments = listOf(navArgument("sub") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            })
+                        ) { backStackEntry ->
+                            val sub = backStackEntry.arguments?.getString("sub")
                             SettingsScreen(
-                                onBack = { navController.popBackStack() }
+                                onBack = { navController.popBackStack() },
+                                initialSubScreen = sub
                             )
                         }
 
                         composable("about") {
-                            AboutScreen(
+                            SettingsScreen(
                                 onBack = { navController.popBackStack() },
-                                onOpenLibraries = { navController.navigate("libraries") }
+                                initialSubScreen = "about"
                             )
                         }
 
                         composable("libraries") {
-                            LibrariesScreen(
-                                onBack = { navController.popBackStack() }
+                            SettingsScreen(
+                                onBack = { navController.popBackStack() },
+                                initialSubScreen = "libraries"
                             )
                         }
                     }
