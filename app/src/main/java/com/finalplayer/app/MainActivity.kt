@@ -35,12 +35,28 @@ import org.koin.androidx.compose.koinViewModel
 class MainActivity : ComponentActivity() {
 
     private fun encodeNavPath(path: String): String {
-        return Base64.encodeToString(path.toByteArray(Charsets.UTF_8), Base64.NO_WRAP or Base64.URL_SAFE)
+        if (path.isEmpty()) return ""
+        return path.toByteArray(Charsets.UTF_8).joinToString("") { "%02x".format(it) }
     }
 
     private fun decodeNavPath(encoded: String): String {
+        if (encoded.isEmpty()) return ""
         return try {
-            String(Base64.decode(encoded, Base64.NO_WRAP or Base64.URL_SAFE), Charsets.UTF_8)
+            val clean = encoded.trim()
+            val isHex = clean.length % 2 == 0 && clean.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+            if (isHex) {
+                val bytes = ByteArray(clean.length / 2)
+                for (i in clean.indices step 2) {
+                    bytes[i / 2] = clean.substring(i, i + 2).toInt(16).toByte()
+                }
+                String(bytes, Charsets.UTF_8)
+            } else {
+                try {
+                    String(Base64.decode(clean, Base64.NO_WRAP or Base64.URL_SAFE), Charsets.UTF_8)
+                } catch (_: Exception) {
+                    Uri.decode(clean)
+                }
+            }
         } catch (e: Exception) {
             Uri.decode(encoded)
         }
