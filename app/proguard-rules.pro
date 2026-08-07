@@ -39,3 +39,13 @@
 -keep class org.apache.commons.net.** { *; }
 -dontwarn org.apache.commons.net.**
 
+# ----------------------------------------------------------------------------
+# Fix for MBassador Event Bus (Missing javax.el classes on Android)
+# ----------------------------------------------------------------------------
+-dontwarn javax.el.**
+-dontwarn java.beans.**
+-keep class javax.el.** { *; }
+
+# Keep MBassador classes safe from shrinking if heavily relying on reflection
+-keep class net.engio.mbassy.** { *; }
+-dontwarn net.engio.mbassy.**
