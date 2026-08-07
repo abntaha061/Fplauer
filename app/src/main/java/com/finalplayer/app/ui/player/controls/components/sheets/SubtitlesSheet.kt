@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ClosedCaptionDisabled
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.HorizontalDivider
@@ -51,6 +52,7 @@ fun SubtitlesSheet(
     onDisableSubtitles: () -> Unit,
     onAddExternalSubtitle: (Uri) -> Unit,
     onRemoveSubtitle: ((Int) -> Unit)? = null,
+    onOpenSettings: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val documentPickerLauncher = rememberLauncherForActivityResult(
@@ -69,7 +71,7 @@ fun SubtitlesSheet(
         ) {
             val subTracks = tracks.filter { it.isSubtitle || it.type == "sub" }
 
-            // Header: Title + Add File Button
+            // Header: Title + Settings Icon + Add File Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -83,28 +85,43 @@ fun SubtitlesSheet(
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
 
-                TextButton(
-                    onClick = {
-                        documentPickerLauncher.launch(
-                            arrayOf(
-                                "text/plain",
-                                "text/srt",
-                                "text/vtt",
-                                "application/x-subrip",
-                                "text/x-ssa",
-                                "*/*"
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onOpenSettings != null) {
+                        IconButton(
+                            onClick = onOpenSettings,
+                            modifier = Modifier.testTag("subtitle_settings_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "إعدادات الترجمة",
+                                tint = MaterialTheme.colorScheme.primary
                             )
+                        }
+                    }
+
+                    TextButton(
+                        onClick = {
+                            documentPickerLauncher.launch(
+                                arrayOf(
+                                    "text/plain",
+                                    "text/srt",
+                                    "text/vtt",
+                                    "application/x-subrip",
+                                    "text/x-ssa",
+                                    "*/*"
+                                )
+                            )
+                        },
+                        modifier = Modifier.testTag("add_external_sub_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "إضافة ملف ترجمة",
+                            modifier = Modifier.size(18.dp)
                         )
-                    },
-                    modifier = Modifier.testTag("add_external_sub_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "إضافة ملف ترجمة",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("إضافة ملف ترجمة")
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("إضافة ملف ترجمة")
+                    }
                 }
             }
 

@@ -4,10 +4,18 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.finalplayer.app.data.preferences.base.DataStorePreference
+import com.finalplayer.app.data.preferences.base.Preference
 
-class DecoderPreferences(dataStore: DataStore<Preferences>) {
-    val tryHWDecoding = Preference(dataStore, booleanPreferencesKey("try_hw_decoding"), true)
-    val gpuNext = Preference(dataStore, booleanPreferencesKey("gpu_next"), false)
-    val profile = Preference(dataStore, stringPreferencesKey("decoder_profile"), "fast")
-    val debanding = Preference(dataStore, stringPreferencesKey("decoder_debanding"), "None")
+class DecoderPreferences(private val dataStore: DataStore<Preferences>) {
+    val tryHWDecoding  = pref(booleanPreferencesKey("dec_hw"), true)
+    val gpuNext        = pref(booleanPreferencesKey("dec_gpu_next"), false)
+    val useVulkan      = pref(booleanPreferencesKey("dec_vulkan"), false)
+    val profile        = pref(stringPreferencesKey("dec_profile"), "fast")
+    val debanding      = pref(stringPreferencesKey("dec_debanding"), "None")
+    val hdrScreenOutput= pref(booleanPreferencesKey("dec_hdr"), false)
+    val useYUV420P     = pref(booleanPreferencesKey("dec_yuv420p"), false)
+
+    private fun <T> pref(key: Preferences.Key<T>, default: T): Preference<T> =
+        DataStorePreference(dataStore, key, default)
 }

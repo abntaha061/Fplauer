@@ -26,12 +26,16 @@ class MPVController(private val context: Context) {
 
     fun attachView(view: MPVView) {
         this.mpvView = view
+        MPVLib.activeView = view
         view.initialize(context, context.filesDir)
         startPolling()
     }
 
     fun detachView() {
         pollingJob?.cancel()
+        if (MPVLib.activeView == this.mpvView) {
+            MPVLib.activeView = null
+        }
         this.mpvView = null
     }
 

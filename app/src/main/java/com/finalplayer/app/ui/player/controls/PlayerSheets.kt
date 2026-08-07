@@ -10,6 +10,7 @@ import com.finalplayer.app.ui.player.controls.components.sheets.ChaptersSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.DecoderSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.MoreSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.PlaybackSpeedSheet
+import com.finalplayer.app.ui.player.controls.components.sheets.SubtitleSettingsPanel
 import com.finalplayer.app.ui.player.controls.components.sheets.SubtitlesSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.TrackNode
 
@@ -47,6 +48,10 @@ fun PlayerSheets(
             onDisableSubtitles = onDisableSubtitles,
             onAddExternalSubtitle = onAddSubtitle,
             onRemoveSubtitle = onRemoveSubtitle,
+            onOpenSettings = { onOpenSheet(Sheets.SubtitleSettings) },
+            onDismiss = onDismiss
+        )
+        Sheets.SubtitleSettings -> SubtitleSettingsPanel(
             onDismiss = onDismiss
         )
         Sheets.AudioTracks -> AudioTracksSheet(

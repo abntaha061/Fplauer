@@ -2,7 +2,8 @@ package com.finalplayer.app.ui.player
 
 sealed class Sheets {
     object None           : Sheets()
-    object SubtitleTracks : Sheets()
+    object SubtitleTracks   : Sheets()
+    object SubtitleSettings : Sheets()
     object AudioTracks    : Sheets()
     object Chapters       : Sheets()
     object Decoders       : Sheets()

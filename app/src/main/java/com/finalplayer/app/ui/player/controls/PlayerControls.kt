@@ -87,6 +87,7 @@ import com.finalplayer.app.ui.player.controls.components.sheets.ChaptersSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.DecoderSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.MoreSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.PlaybackSpeedSheet
+import com.finalplayer.app.ui.player.controls.components.sheets.SubtitleSettingsPanel
 import com.finalplayer.app.ui.player.controls.components.sheets.SubtitlesSheet
 import com.finalplayer.app.ui.player.controls.components.sheets.TrackNode
 import kotlinx.coroutines.delay
@@ -570,6 +571,12 @@ fun PlayerControls(
                     onCloseSheet()
                 },
                 onRemoveSubtitle = onRemoveSubtitle,
+                onOpenSettings = { onOpenSheet(Sheets.SubtitleSettings) },
+                onDismiss = onCloseSheet
+            )
+        }
+        is Sheets.SubtitleSettings -> {
+            SubtitleSettingsPanel(
                 onDismiss = onCloseSheet
             )
         }

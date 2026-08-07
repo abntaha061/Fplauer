@@ -38,12 +38,12 @@ class HomeViewModel(
         viewModelScope.launch {
             combine(
                 videoRepository.getAllFolders(),
-                sortPreferences.sortBy.flow,
-                sortPreferences.sortAscending.flow,
-                sortPreferences.viewMode.flow,
-                sortPreferences.layoutMode.flow,
-                sortPreferences.visibleFields.flow,
-                sortPreferences.onlyForFolderList.flow
+                sortPreferences.sortBy.asFlow(),
+                sortPreferences.sortAscending.asFlow(),
+                sortPreferences.viewMode.asFlow(),
+                sortPreferences.layoutMode.asFlow(),
+                sortPreferences.visibleFields.asFlow(),
+                sortPreferences.onlyForFolderList.asFlow()
             ) { args ->
                 @Suppress("UNCHECKED_CAST")
                 val folders = args[0] as? List<com.finalplayer.app.domain.model.VideoFolder> ?: emptyList()

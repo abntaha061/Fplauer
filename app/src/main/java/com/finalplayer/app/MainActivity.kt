@@ -154,8 +154,7 @@ class MainActivity : ComponentActivity() {
 
                         composable("settings") {
                             SettingsScreen(
-                                onBack = { navController.popBackStack() },
-                                onAboutClick = { navController.navigate("about") }
+                                onBack = { navController.popBackStack() }
                             )
                         }
 

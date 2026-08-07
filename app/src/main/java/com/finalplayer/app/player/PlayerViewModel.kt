@@ -16,6 +16,7 @@ import com.finalplayer.app.data.preferences.DecoderPreferences
 import com.finalplayer.app.data.preferences.PlayerPreferences
 import com.finalplayer.app.data.preferences.SubtitlesPreferences
 import com.finalplayer.app.player.core.MPVController
+import com.finalplayer.app.player.core.MPVLib
 import com.finalplayer.app.player.core.TrackSelector
 import com.finalplayer.app.ui.player.ChapterNode
 import com.finalplayer.app.ui.player.Decoder
@@ -310,9 +311,10 @@ class PlayerViewModel(
     }
 
     private fun observePreferences() {
+        observePreferencesAndApply()
         playerPrefs?.let { prefs ->
             viewModelScope.launch {
-                prefs.defaultSpeed.flow.collect { speed ->
+                prefs.defaultSpeed.changes().collect { speed ->
                     if (abs(speed - _playbackSpeed.value) > 0.01f) {
                         setPlaybackSpeed(speed)
                     }
@@ -321,34 +323,66 @@ class PlayerViewModel(
         }
         subtitlesPrefs?.let { prefs ->
             viewModelScope.launch {
-                prefs.fontSize.flow.collect { fontSize ->
+                prefs.fontSize.changes().collect { fontSize ->
                     mpvController.setPropertyInt("sub-font-size", fontSize)
                 }
             }
             viewModelScope.launch {
-                prefs.subScale.flow.collect { scale ->
+                prefs.subScale.changes().collect { scale ->
                     mpvController.setPropertyFloat("sub-scale", scale)
                 }
             }
             viewModelScope.launch {
-                prefs.bold.flow.collect { isBold ->
+                prefs.bold.changes().collect { isBold ->
                     mpvController.setPropertyBoolean("sub-bold", isBold)
                 }
             }
         }
         audioPrefs?.let { prefs ->
             viewModelScope.launch {
-                prefs.defaultAudioDelay.flow.collect { delay ->
+                prefs.defaultAudioDelay.changes().collect { delay ->
                     mpvController.setPropertyInt("audio-delay", delay)
                 }
             }
         }
         decoderPrefs?.let { prefs ->
             viewModelScope.launch {
-                prefs.tryHWDecoding.flow.collect { tryHW ->
+                prefs.tryHWDecoding.changes().collect { tryHW ->
                     if (tryHW && _currentDecoder.value == Decoder.SOFTWARE) {
                         setDecoder(Decoder.HW_PLUS)
                     }
+                }
+            }
+        }
+    }
+
+    private fun observePreferencesAndApply() {
+        subtitlesPrefs?.let { prefs ->
+            viewModelScope.launch {
+                prefs.subPos.changes().collect { pos ->
+                    MPVLib.setPropertyInt("sub-pos", pos)
+                }
+            }
+            viewModelScope.launch {
+                prefs.fontSize.changes().collect { size ->
+                    MPVLib.setOptionString("sub-font-size", size.toString())
+                }
+            }
+            viewModelScope.launch {
+                prefs.subScale.changes().collect { scale ->
+                    MPVLib.setPropertyFloat("sub-scale", scale)
+                }
+            }
+            viewModelScope.launch {
+                prefs.bold.changes().collect { bold ->
+                    MPVLib.setOptionString("sub-bold", if (bold) "yes" else "no")
+                }
+            }
+        }
+        playerPrefs?.let { prefs ->
+            viewModelScope.launch {
+                prefs.usePreciseSeeking.changes().collect { precise ->
+                    MPVLib.setOptionString("hr-seek", if (precise) "yes" else "no")
                 }
             }
         }

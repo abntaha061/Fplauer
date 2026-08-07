@@ -5,10 +5,17 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.finalplayer.app.data.preferences.base.DataStorePreference
+import com.finalplayer.app.data.preferences.base.Preference
 
-class AudioPreferences(dataStore: DataStore<Preferences>) {
-    val preferredLanguages = Preference(dataStore, stringPreferencesKey("audio_preferred_languages"), "")
-    val defaultAudioDelay = Preference(dataStore, intPreferencesKey("default_audio_delay"), 0)
-    val audioPitchCorrection = Preference(dataStore, booleanPreferencesKey("audio_pitch_correction"), true)
-    val volumeBoostCap = Preference(dataStore, intPreferencesKey("volume_boost_cap"), 0)
+class AudioPreferences(private val dataStore: DataStore<Preferences>) {
+    val preferredLanguages    = pref(stringPreferencesKey("audio_preferred_langs"), "")
+    val defaultAudioDelay     = pref(intPreferencesKey("audio_default_delay_ms"), 0)
+    val audioPitchCorrection  = pref(booleanPreferencesKey("audio_pitch_correction"), true)
+    val volumeBoostCap        = pref(intPreferencesKey("audio_volume_boost_cap"), 0)
+    val volumeNormalization   = pref(booleanPreferencesKey("audio_volume_normalization"), false)
+    val drcEnabled            = pref(booleanPreferencesKey("audio_drc"), false)
+
+    private fun <T> pref(key: Preferences.Key<T>, default: T): Preference<T> =
+        DataStorePreference(dataStore, key, default)
 }

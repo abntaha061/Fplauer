@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.finalplayer.app.data.preferences.AppearancePreferences
 import com.finalplayer.app.data.preferences.AudioPreferences
 import com.finalplayer.app.data.preferences.DecoderPreferences
+import com.finalplayer.app.data.preferences.GesturePreferences
 import com.finalplayer.app.data.preferences.OnboardingPreferences
 import com.finalplayer.app.data.preferences.PlayerPreferences
 import com.finalplayer.app.data.preferences.SortPreferences
@@ -25,5 +26,6 @@ val preferencesModule = module {
     single { AudioPreferences(get()) }
     single { DecoderPreferences(get()) }
     single { AppearancePreferences(get()) }
+    single { GesturePreferences(get()) }
     single { SortPreferences(get()) }
 }
