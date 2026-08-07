@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,14 +26,21 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.finalplayer.app.data.preferences.PlayerPreferences
 import com.finalplayer.app.player.SeekState
+import org.koin.compose.koinInject
 import java.util.Locale
 
 @Composable
 fun SeekOverlay(
     seekState: SeekState?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    playerPrefs: PlayerPreferences = koinInject()
 ) {
+    val showTime by playerPrefs.showSeekTimeWhileSeeking.asFlow().collectAsState(initial = true)
+
+    if (!showTime) return
+
     AnimatedVisibility(
         visible = seekState != null && seekState.isDragging,
         enter = fadeIn(),

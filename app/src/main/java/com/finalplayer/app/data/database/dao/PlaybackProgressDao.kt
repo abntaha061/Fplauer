@@ -21,6 +21,12 @@ interface PlaybackProgressDao {
     @Query("DELETE FROM playback_progress WHERE videoId = :videoId")
     suspend fun deleteProgress(videoId: String)
 
+    @Query("DELETE FROM playback_progress WHERE lastPlayedTimestamp < :cutoffTimestamp")
+    suspend fun deleteOlderThan(cutoffTimestamp: Long)
+
+    @Query("DELETE FROM playback_progress WHERE videoId NOT IN (SELECT videoId FROM playback_progress ORDER BY lastPlayedTimestamp DESC LIMIT 50)")
+    suspend fun trimExcessHistory()
+
     @Query("DELETE FROM playback_progress")
     suspend fun clearAll()
 }

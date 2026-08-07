@@ -1,6 +1,7 @@
 package com.finalplayer.app.player
 
 import android.app.PictureInPictureParams
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -42,6 +43,13 @@ class PlayerActivity : ComponentActivity() {
         insetsController.hide(WindowInsetsCompat.Type.systemBars())
         insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
+        // Apply screen orientation preference dynamically
+        lifecycleScope.launch {
+            viewModel.playerPrefs?.playerOrientation?.asFlow()?.collect { orientationKey ->
+                applyOrientation(orientationKey)
+            }
+        }
+
         // Parse video details from intent
         videoPath = intent.getStringExtra(EXTRA_VIDEO_PATH)
             ?: intent.data?.toString()
@@ -82,9 +90,24 @@ class PlayerActivity : ComponentActivity() {
         }
     }
 
+    private fun applyOrientation(key: String) {
+        requestedOrientation = when (key) {
+            "portrait" -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            "portrait_reverse" -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
+            "portrait_sensor" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            "landscape" -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            "landscape_reverse" -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+            "landscape_sensor" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            "smart" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR
+            "free" -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val autoPip = viewModel.playerPrefs?.autoPiPOnNavigation?.get() ?: true
+        if (autoPip && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 val params = PictureInPictureParams.Builder().build()
                 enterPictureInPictureMode(params)
@@ -95,6 +118,11 @@ class PlayerActivity : ComponentActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val disableMedia = viewModel.playerPrefs?.disableMediaButtons?.get() ?: false
+        if (disableMedia && isMediaKey(keyCode)) {
+            return true
+        }
+
         if (event != null) {
             val mpvView = viewModel.mpvController.getAttachedView()
             if (mpvView != null && mpvView.onKey(event)) {
@@ -102,6 +130,21 @@ class PlayerActivity : ComponentActivity() {
             }
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    private fun isMediaKey(keyCode: Int): Boolean {
+        return when (keyCode) {
+            KeyEvent.KEYCODE_MEDIA_PLAY,
+            KeyEvent.KEYCODE_MEDIA_PAUSE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+            KeyEvent.KEYCODE_HEADSETHOOK,
+            KeyEvent.KEYCODE_MEDIA_NEXT,
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+            KeyEvent.KEYCODE_MEDIA_STOP,
+            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+            KeyEvent.KEYCODE_MEDIA_REWIND -> true
+            else -> false
+        }
     }
 
     override fun onDestroy() {

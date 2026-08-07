@@ -20,16 +20,35 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-class RecentsViewModel : ViewModel(), KoinComponent {
-    private val playbackRepository: PlaybackRepository by inject()
-    private val videoDao: VideoDao by inject()
+class RecentsViewModel(
+    private val playbackRepository: PlaybackRepository,
+    private val videoDao: VideoDao
+) : ViewModel() {
+
+    init {
+        pruneOldHistory()
+    }
+
+    private fun pruneOldHistory() {
+        viewModelScope.launch {
+            val threeDaysAgo = System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000L)
+            playbackRepository.deleteOlderThan(threeDaysAgo)
+            playbackRepository.trimExcessHistory()
+        }
+    }
 
     val recentlyPlayed: StateFlow<List<RecentVideoItem>> = combine(
         playbackRepository.getRecentlyPlayed(50),
         videoDao.getAllVideos()
     ) { progressList, allVideos ->
+        val threeDaysAgo = System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000L)
+        val validProgress = progressList
+            .filter { it.lastPlayedTimestamp >= threeDaysAgo }
+            .distinctBy { it.videoId }
+            .take(50)
+
         val videoMap = allVideos.associateBy { it.id }
-        progressList.mapNotNull { progress ->
+        validProgress.mapNotNull { progress ->
             val videoEntity = videoMap[progress.videoId]
             val video = videoEntity?.toDomainModel() ?: VideoItem(
                 id = progress.videoId,

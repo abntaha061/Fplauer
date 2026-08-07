@@ -64,8 +64,8 @@ fun RecentsScreen(
 ) {
     val recents by viewModel.recentlyPlayed.collectAsState()
 
-    val darkGreen = Color(0xFF2E7D32)
-    val lightGreenBg = Color(0xFFF5FAF5)
+    val primaryAccent = MaterialTheme.colorScheme.primary
+    val containerBg = MaterialTheme.colorScheme.surface
 
     Scaffold(
         topBar = {
@@ -75,7 +75,7 @@ fun RecentsScreen(
                         text = "الأخيرة",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = darkGreen
+                            color = primaryAccent
                         )
                     )
                 },
@@ -88,17 +88,17 @@ fun RecentsScreen(
                             Icon(
                                 imageVector = Icons.Default.DeleteSweep,
                                 contentDescription = "مسح السجل",
-                                tint = darkGreen
+                                tint = primaryAccent
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = lightGreenBg
+                    containerColor = containerBg
                 )
             )
         },
-        containerColor = lightGreenBg
+        containerColor = containerBg
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -143,7 +143,7 @@ fun RecentsScreen(
                             text = "آخر ما تم تشغيله",
                             style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = darkGreen
+                                color = primaryAccent
                             ),
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
@@ -166,7 +166,7 @@ fun RecentsScreen(
                             )
                         }
 
-                        items(remainingRecents, key = { it.video.id }) { item ->
+                        items(remainingRecents, key = { "${it.video.id}_${it.progress.lastPlayedTimestamp}" }) { item ->
                             RecentVideoCard(
                                 item = item,
                                 onClick = { onVideoClick(item.video.uri, item.video.title) },
@@ -288,8 +288,8 @@ private fun MostRecentCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp),
-                color = if (item.isCompleted) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary,
-                trackColor = Color.LightGray.copy(alpha = 0.4f)
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
             )
         }
     }
@@ -310,7 +310,7 @@ private fun RecentVideoCard(
             .clickable { onClick() }
             .testTag("recent_card_${item.video.id}"),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -323,13 +323,13 @@ private fun RecentVideoCard(
                 Surface(
                     modifier = Modifier.size(48.dp),
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFE8F5E9)
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = null,
-                            tint = Color(0xFF2E7D32),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -349,7 +349,7 @@ private fun RecentVideoCard(
                         if (item.isCompleted) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(
-                                color = Color(0xFFE8F5E9),
+                                color = MaterialTheme.colorScheme.primaryContainer,
                                 shape = RoundedCornerShape(4.dp)
                             ) {
                                 Row(
@@ -359,14 +359,14 @@ private fun RecentVideoCard(
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
                                         contentDescription = null,
-                                        tint = Color(0xFF2E7D32),
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(12.dp)
                                     )
                                     Spacer(modifier = Modifier.width(2.dp))
                                     Text(
                                         text = "اكتمل ✓",
                                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                        color = Color(0xFF2E7D32)
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -406,8 +406,8 @@ private fun RecentVideoCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(3.dp),
-                color = if (item.isCompleted) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary,
-                trackColor = Color.LightGray.copy(alpha = 0.3f)
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
             )
         }
     }

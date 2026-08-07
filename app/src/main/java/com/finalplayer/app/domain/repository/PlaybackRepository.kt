@@ -8,5 +8,7 @@ interface PlaybackRepository {
     fun getProgress(videoId: String): Flow<PlaybackProgress?>
     fun getRecentlyPlayed(limit: Int): Flow<List<PlaybackProgress>>
     suspend fun removeFromHistory(videoId: String)
+    suspend fun deleteOlderThan(cutoffTimestamp: Long)
+    suspend fun trimExcessHistory()
     suspend fun clearHistory()
 }

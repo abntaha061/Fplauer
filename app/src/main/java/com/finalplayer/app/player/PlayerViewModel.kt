@@ -177,6 +177,33 @@ class PlayerViewModel(
     private val _resumePositionSec = MutableStateFlow<Double?>(null)
     val resumePositionSec: StateFlow<Double?> = _resumePositionSec.asStateFlow()
 
+    private val _isLocked = MutableStateFlow(false)
+    val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
+
+    private val _repeatMode = MutableStateFlow(0)
+    val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
+
+    private val _isShuffle = MutableStateFlow(false)
+    val isShuffle: StateFlow<Boolean> = _isShuffle.asStateFlow()
+
+    private val _isFlipV = MutableStateFlow(false)
+    val isFlipV: StateFlow<Boolean> = _isFlipV.asStateFlow()
+
+    private val _isFlipH = MutableStateFlow(false)
+    val isFlipH: StateFlow<Boolean> = _isFlipH.asStateFlow()
+
+    private val _isCinemaMode = MutableStateFlow(false)
+    val isCinemaMode: StateFlow<Boolean> = _isCinemaMode.asStateFlow()
+
+    private val _isBackgroundPlay = MutableStateFlow(false)
+    val isBackgroundPlay: StateFlow<Boolean> = _isBackgroundPlay.asStateFlow()
+
+    private val _currentAspectRatio = MutableStateFlow("default")
+    val currentAspectRatio: StateFlow<String> = _currentAspectRatio.asStateFlow()
+
+    private val _currentVideoZoom = MutableStateFlow(1.0f)
+    val currentVideoZoom: StateFlow<Float> = _currentVideoZoom.asStateFlow()
+
     private var autoSaveProgressJob: Job? = null
     private val _externalSubtitles = mutableListOf<String>()
     private var hasAttemptedAutoSelectSub = false
@@ -468,6 +495,78 @@ class PlayerViewModel(
         _paused.value = false
     }
 
+    fun toggleLock() {
+        _isLocked.value = !_isLocked.value
+        if (_isLocked.value) {
+            _controlsShown.value = false
+        }
+    }
+
+    fun toggleRepeatMode() {
+        val next = (_repeatMode.value + 1) % 3
+        _repeatMode.value = next
+        mpvController.setPropertyString("loop-file", if (next == 1) "inf" else "no")
+        mpvController.setPropertyString("loop-playlist", if (next == 2) "inf" else "no")
+    }
+
+    fun toggleShuffle() {
+        val next = !_isShuffle.value
+        _isShuffle.value = next
+        mpvController.setPropertyBoolean("shuffle", next)
+    }
+
+    fun toggleFlipV() {
+        val next = !_isFlipV.value
+        _isFlipV.value = next
+        val curRot = mpvController.getAttachedView()?.getPropertyInt("video-rotate") ?: 0
+        mpvController.setPropertyInt("video-rotate", (curRot + 180) % 360)
+    }
+
+    fun toggleFlipH() {
+        val next = !_isFlipH.value
+        _isFlipH.value = next
+        val curRot = mpvController.getAttachedView()?.getPropertyInt("video-rotate") ?: 0
+        mpvController.setPropertyInt("video-rotate", (curRot + 180) % 360)
+    }
+
+    fun stepFrame(forward: Boolean) {
+        if (forward) {
+            mpvController.getAttachedView()?.command(arrayOf("frame-step"))
+        } else {
+            mpvController.getAttachedView()?.command(arrayOf("frame-back-step"))
+        }
+    }
+
+    fun toggleAbRepeat() {
+        val pos = _precisePosition.value
+        mpvController.setPropertyString("ab-loop-a", pos.toString())
+    }
+
+    fun toggleCinemaMode() {
+        _isCinemaMode.value = !_isCinemaMode.value
+    }
+
+    fun toggleBackgroundPlay() {
+        _isBackgroundPlay.value = !_isBackgroundPlay.value
+    }
+
+    fun setAspectRatio(ratio: String) {
+        _currentAspectRatio.value = ratio
+        val valStr = when (ratio) {
+            "16:9" -> "16:9"
+            "4:3" -> "4:3"
+            "21:9" -> "21:9"
+            "fill" -> "-1"
+            else -> "-1"
+        }
+        mpvController.setPropertyString("video-aspect-override", valStr)
+    }
+
+    fun setVideoZoom(zoom: Float) {
+        _currentVideoZoom.value = zoom
+        mpvController.setPropertyFloat("video-zoom", zoom - 1.0f)
+    }
+
     fun openSheet(sheet: Sheets) {
         _sheetShown.update { sheet }
         if (sheet != Sheets.None) setControlsShown(false)
@@ -653,20 +752,22 @@ class PlayerViewModel(
     }
 
     fun leftSeek() {
-        seekBy(-10)
-        showDoubleTapFeedback(isLeft = true)
+        val duration = playerPrefs?.doubleTapToSeekDuration?.get() ?: 10
+        seekBy(-duration)
+        showDoubleTapFeedback(isLeft = true, amount = duration)
     }
 
     fun rightSeek() {
-        seekBy(10)
-        showDoubleTapFeedback(isLeft = false)
+        val duration = playerPrefs?.doubleTapToSeekDuration?.get() ?: 10
+        seekBy(duration)
+        showDoubleTapFeedback(isLeft = false, amount = duration)
     }
 
-    private fun showDoubleTapFeedback(isLeft: Boolean) {
+    private fun showDoubleTapFeedback(isLeft: Boolean, amount: Int) {
         doubleTapHideJob?.cancel()
         _doubleTapSeekState.value = DoubleTapSeekState(
             isLeft = isLeft,
-            amountSeconds = 10,
+            amountSeconds = amount,
             timestamp = System.currentTimeMillis()
         )
         doubleTapHideJob = viewModelScope.launch {

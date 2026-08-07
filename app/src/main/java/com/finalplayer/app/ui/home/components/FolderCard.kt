@@ -35,12 +35,22 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.compose.ui.text.style.TextOverflow
+
 @Composable
 fun FolderCard(
     folder: VideoFolder,
+    visibleFields: Set<String> = emptySet(),
     unwatchedCount: Int = 3, // Mock unwatched count for badge demo
     onClick: () -> Unit = {}
 ) {
+    val showFullName = visibleFields.isEmpty() || visibleFields.contains("Full Name")
+    val showPath = visibleFields.contains("Path")
+    val showDuration = visibleFields.isEmpty() || visibleFields.contains("Total Duration")
+    val showSize = visibleFields.isEmpty() || visibleFields.contains("Folder Size") || visibleFields.contains("File Size")
+    val showVideoCount = visibleFields.isEmpty() || visibleFields.contains("Total Videos") || visibleFields.contains("Total Media")
+    val showDate = visibleFields.isEmpty() || visibleFields.contains("Date")
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -58,39 +68,58 @@ fun FolderCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Folder Icon Container on the Right / End side in RTL or Left in LTR
             // Details Column
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = folder.name,
+                    text = if (showFullName && showPath) folder.path else folder.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Chips Row
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    InfoChip(text = formatDuration(folder.totalDuration))
-                    InfoChip(text = formatFileSize(folder.totalSizeBytes))
-                    InfoChip(text = "Videos ${folder.videoCount}")
+                if (showPath && !showFullName) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = folder.path,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                if (showDuration || showSize || showVideoCount) {
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                // Last modified
-                Text(
-                    text = "Modified: ${formatDate(folder.lastModified)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp
-                )
+                    // Chips Row
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (showDuration) {
+                            InfoChip(text = formatDuration(folder.totalDuration))
+                        }
+                        if (showSize) {
+                            InfoChip(text = formatFileSize(folder.totalSizeBytes))
+                        }
+                        if (showVideoCount) {
+                            InfoChip(text = "Videos ${folder.videoCount}")
+                        }
+                    }
+                }
+
+                if (showDate) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Last modified
+                    Text(
+                        text = "Modified: ${formatDate(folder.lastModified)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -129,6 +158,107 @@ fun FolderCard(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun FolderGridCard(
+    folder: VideoFolder,
+    visibleFields: Set<String> = emptySet(),
+    unwatchedCount: Int = 3,
+    onClick: () -> Unit = {}
+) {
+    val showFullName = visibleFields.isEmpty() || visibleFields.contains("Full Name")
+    val showPath = visibleFields.contains("Path")
+    val showDuration = visibleFields.isEmpty() || visibleFields.contains("Total Duration")
+    val showSize = visibleFields.isEmpty() || visibleFields.contains("Folder Size") || visibleFields.contains("File Size")
+    val showVideoCount = visibleFields.isEmpty() || visibleFields.contains("Total Videos") || visibleFields.contains("Total Media")
+    val showDate = visibleFields.isEmpty() || visibleFields.contains("Date")
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(6.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.tertiary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Folder,
+                        contentDescription = "Folder",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+
+                if (unwatchedCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(Color(0xFFE53935), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (unwatchedCount > 99) "99+" else unwatchedCount.toString(),
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = if (showFullName && showPath) folder.path else folder.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            if (showDuration || showSize || showVideoCount) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (showVideoCount) InfoChip(text = "${folder.videoCount} videos")
+                    if (showSize) InfoChip(text = formatFileSize(folder.totalSizeBytes))
+                }
+            }
+
+            if (showDate) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = formatDate(folder.lastModified),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 10.sp
+                )
             }
         }
     }

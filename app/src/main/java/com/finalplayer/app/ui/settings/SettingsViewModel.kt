@@ -41,12 +41,39 @@ class SettingsViewModel(
     val autoPiPOnNavigation = playerPrefs.autoPiPOnNavigation.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
 
     // Appearance Preferences State
+    val themeMode = appearancePrefs.themeMode.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, "system")
+    val themePreset = appearancePrefs.themePreset.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, "default")
+    val amoledMode = appearancePrefs.amoledMode.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val useSystemFont = appearancePrefs.useSystemFont.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
     val hidePlayerButtonsBackground = appearancePrefs.hidePlayerButtonsBackground.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val glassmorphismControls = appearancePrefs.glassmorphismControls.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val glassmorphismSeekbar = appearancePrefs.glassmorphismSeekbar.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val seekbarStyle = appearancePrefs.seekbarStyle.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, "thin")
     val useSpringAnimations = appearancePrefs.useSpringAnimations.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
     val matchControlsToTheme = appearancePrefs.matchControlsToTheme.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
     val playerAlwaysDark = appearancePrefs.playerAlwaysDark.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val glassmorphismControls = appearancePrefs.glassmorphismControls.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val glassmorphismSeekbar = appearancePrefs.glassmorphismSeekbar.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // Navigation Tabs State
+    val showHomeTab = appearancePrefs.showHomeTab.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val showShortsTab = appearancePrefs.showShortsTab.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val showRecentsTab = appearancePrefs.showRecentsTab.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val showPlaylistsTab = appearancePrefs.showPlaylistsTab.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val showNetworkTab = appearancePrefs.showNetworkTab.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+
+    // File Browser State
+    val showFullFileNames = appearancePrefs.showFullFileNames.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val showNewVideoTag = appearancePrefs.showNewVideoTag.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val newVideoDaysThreshold = appearancePrefs.newVideoDaysThreshold.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, 7)
+    val autoScrollToLastVideo = appearancePrefs.autoScrollToLastVideo.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val watchThreshold = appearancePrefs.watchThreshold.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, 90)
+    val showAudioFiles = appearancePrefs.showAudioFiles.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val showDetailedBreadcrumbs = appearancePrefs.showDetailedBreadcrumbs.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // Thumbnails State
+    val clickThumbnailToSelect = appearancePrefs.clickThumbnailToSelect.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val enableGridThumbnails = appearancePrefs.enableGridThumbnails.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val thumbnailStrategy = appearancePrefs.thumbnailStrategy.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, "first_frame")
+    val thumbnailPositionPercent = appearancePrefs.thumbnailPositionPercent.asFlow().stateIn(viewModelScope, SharingStarted.Lazily, 30)
 
     fun <T> setPreference(preference: Preference<T>, value: T) {
         viewModelScope.launch {

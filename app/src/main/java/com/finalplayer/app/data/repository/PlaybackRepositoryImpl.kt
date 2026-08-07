@@ -32,6 +32,14 @@ class PlaybackRepositoryImpl(
         playbackProgressDao.deleteProgress(videoId)
     }
 
+    override suspend fun deleteOlderThan(cutoffTimestamp: Long) {
+        playbackProgressDao.deleteOlderThan(cutoffTimestamp)
+    }
+
+    override suspend fun trimExcessHistory() {
+        playbackProgressDao.trimExcessHistory()
+    }
+
     override suspend fun clearHistory() {
         playbackProgressDao.clearAll()
     }

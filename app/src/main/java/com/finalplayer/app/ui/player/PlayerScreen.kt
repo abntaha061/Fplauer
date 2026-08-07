@@ -62,6 +62,14 @@ fun PlayerScreen(
     val isPlaylistMode by viewModel.isPlaylistMode.collectAsStateWithLifecycle()
     val resumePositionSec by viewModel.resumePositionSec.collectAsStateWithLifecycle()
 
+    val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
+    val repeatMode by viewModel.repeatMode.collectAsStateWithLifecycle()
+    val isShuffle by viewModel.isShuffle.collectAsStateWithLifecycle()
+    val isCinemaMode by viewModel.isCinemaMode.collectAsStateWithLifecycle()
+    val isBackgroundPlay by viewModel.isBackgroundPlay.collectAsStateWithLifecycle()
+    val currentAspectRatio by viewModel.currentAspectRatio.collectAsStateWithLifecycle()
+    val currentVideoZoom by viewModel.currentVideoZoom.collectAsStateWithLifecycle()
+
     val mpvView = remember { MPVView(context) }
 
     // Initialize initial system audio & brightness
@@ -167,7 +175,30 @@ fun PlayerScreen(
             onNextClick = { viewModel.playNextVideo() },
             onPreviousClick = { viewModel.playPreviousVideo() },
             onReorderPlaylist = { from, to -> viewModel.reorderPlaylist(from, to) },
-            onSelectPlaylistItem = { idx -> viewModel.playPlaylistItem(idx) }
+            onSelectPlaylistItem = { idx -> viewModel.playPlaylistItem(idx) },
+            isLocked = isLocked,
+            repeatMode = repeatMode,
+            isShuffle = isShuffle,
+            isCinemaMode = isCinemaMode,
+            isBackgroundPlay = isBackgroundPlay,
+            currentAspectRatio = currentAspectRatio,
+            currentVideoZoom = currentVideoZoom,
+            onToggleLock = { viewModel.toggleLock() },
+            onToggleRepeat = { viewModel.toggleRepeatMode() },
+            onToggleShuffle = { viewModel.toggleShuffle() },
+            onFrameStep = { forward -> viewModel.stepFrame(forward) },
+            onFlipVideo = { vertical -> if (vertical) viewModel.toggleFlipV() else viewModel.toggleFlipH() },
+            onToggleAbRepeat = { viewModel.toggleAbRepeat() },
+            onCustomSkip = { viewModel.seekBy(10) },
+            onToggleCinema = { viewModel.toggleCinemaMode() },
+            onToggleBackgroundPlay = { viewModel.toggleBackgroundPlay() },
+            onSetAspectRatio = { ratio -> viewModel.setAspectRatio(ratio) },
+            onSetVideoZoom = { zoom -> viewModel.setVideoZoom(zoom) },
+            onEnterPiP = {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    activity?.enterPictureInPictureMode()
+                }
+            }
         )
 
         val resumePos = resumePositionSec

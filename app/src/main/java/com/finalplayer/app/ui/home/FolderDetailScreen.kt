@@ -38,6 +38,9 @@ import com.finalplayer.app.domain.model.VideoItem
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.finalplayer.app.ui.components.thinScrollbar
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderDetailScreen(
@@ -50,6 +53,7 @@ fun FolderDetailScreen(
         .collectAsState(initial = emptyList())
 
     val folderName = folderPath.substringAfterLast("/").ifEmpty { "الفولدر" }
+    val listState = rememberLazyListState()
 
     Scaffold(
         topBar = {
@@ -78,7 +82,10 @@ fun FolderDetailScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .thinScrollbar(state = listState, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
                 contentPadding = padding
             ) {
                 items(videos, key = { it.id }) { video ->

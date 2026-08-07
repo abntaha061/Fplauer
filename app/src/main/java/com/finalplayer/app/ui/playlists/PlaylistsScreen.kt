@@ -75,8 +75,8 @@ fun PlaylistsScreen(
         uri?.let { viewModel.importFromM3U(it) }
     }
 
-    val darkGreen = Color(0xFF2E7D32)
-    val lightGreenBg = Color(0xFFF5FAF5)
+    val primaryAccent = MaterialTheme.colorScheme.primary
+    val containerBg = MaterialTheme.colorScheme.surface
 
     Scaffold(
         topBar = {
@@ -86,7 +86,7 @@ fun PlaylistsScreen(
                         text = "قوائم التشغيل",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = darkGreen
+                            color = primaryAccent
                         )
                     )
                 },
@@ -98,7 +98,7 @@ fun PlaylistsScreen(
                         Icon(
                             imageVector = Icons.Outlined.FileDownload,
                             contentDescription = "استيراد M3U",
-                            tint = darkGreen
+                            tint = primaryAccent
                         )
                     }
                     IconButton(
@@ -108,16 +108,16 @@ fun PlaylistsScreen(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "إنشاء قائمة",
-                            tint = darkGreen
+                            tint = primaryAccent
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = lightGreenBg
+                    containerColor = containerBg
                 )
             )
         },
-        containerColor = lightGreenBg
+        containerColor = containerBg
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -234,13 +234,13 @@ private fun PlaylistItemCard(
             Surface(
                 modifier = Modifier.size(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFE8F5E9)
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Outlined.PlaylistPlay,
                         contentDescription = null,
-                        tint = Color(0xFF2E7D32),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                 }

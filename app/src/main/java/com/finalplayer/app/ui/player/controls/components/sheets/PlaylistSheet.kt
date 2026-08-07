@@ -110,7 +110,7 @@ fun PlaylistSheet(
                                     Icon(
                                         imageVector = Icons.Default.PlayArrow,
                                         contentDescription = "الفيديو الحالي",
-                                        tint = Color(0xFF2E7D32),
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(24.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -128,7 +128,7 @@ fun PlaylistSheet(
                                     text = item.title,
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isCurrent) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface
+                                        color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     ),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,

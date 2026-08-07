@@ -1,38 +1,52 @@
 package com.finalplayer.app.ui.home
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.finalplayer.app.domain.model.PlaylistWithItems
+import com.finalplayer.app.ui.components.thinScrollbar
 import com.finalplayer.app.ui.home.components.FolderCard
+import com.finalplayer.app.ui.home.components.FolderGridCard
 import com.finalplayer.app.ui.home.components.HomeBottomBar
 import com.finalplayer.app.ui.home.components.HomeTopBar
 import com.finalplayer.app.ui.home.components.SortBottomSheet
@@ -55,6 +69,9 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var showSortSheet by remember { mutableStateOf(false) }
     val sortSheetState = rememberModalBottomSheetState()
+
+    val lazyListState = rememberLazyListState()
+    val lazyGridState = rememberLazyGridState()
 
     LaunchedEffect(Unit) {
         viewModel.refreshVideos()
@@ -99,6 +116,18 @@ fun HomeScreen(
                 .padding(innerPadding)
         ) {
             when (uiState.selectedTab) {
+                HomeTab.NETWORK -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "مصادِر الشبكة / Network Sources",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 HomeTab.PLAYLISTS -> {
                     PlaylistsScreen(
                         onPlaylistClick = onPlaylistClick
@@ -109,37 +138,152 @@ fun HomeScreen(
                         onVideoClick = onRecentVideoClick
                     )
                 }
-                HomeTab.HOME -> {
-                    if (uiState.isLoading && uiState.folders.isEmpty()) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    } else if (!uiState.isLoading && uiState.folders.isEmpty()) {
+                HomeTab.SHORTS -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            text = "لم يتم العثور على فيديوهات / No videos found",
-                            modifier = Modifier.align(Alignment.Center),
+                            text = "مقاطع فيديو قصيرة / Shorts",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
-                        ) {
-                            items(
-                                items = uiState.folders,
-                                key = { folder -> folder.path }
-                            ) { folder ->
-                                FolderCard(
-                                    folder = folder,
-                                    onClick = { onFolderClick(folder.path) }
+                    }
+                }
+                HomeTab.HOME -> {
+                    val isLibraryView = uiState.viewMode == "library"
+                    val isGridView = uiState.layoutMode == "grid"
+
+                    // Gesture detector for Pinching on file list to toggle list <-> grid mode
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTransformGestures { _, _, zoom, _ ->
+                                    if (zoom > 1.25f && !isGridView) {
+                                        viewModel.setLayoutMode("grid")
+                                    } else if (zoom < 0.75f && isGridView) {
+                                        viewModel.setLayoutMode("list")
+                                    }
+                                }
+                            }
+                    ) {
+                        if (uiState.isLoading && uiState.folders.isEmpty() && uiState.allVideos.isEmpty()) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else if (!uiState.isLoading && (isLibraryView && uiState.allVideos.isEmpty() || !isLibraryView && uiState.folders.isEmpty())) {
+                            Text(
+                                text = "لم يتم العثور على فيديوهات / No videos found",
+                                modifier = Modifier.align(Alignment.Center),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            if (isLibraryView) {
+                                if (isGridView) {
+                                    LazyVerticalGrid(
+                                        state = lazyGridState,
+                                        columns = GridCells.Fixed(2),
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp, start = 8.dp, end = 8.dp)
+                                    ) {
+                                        items(
+                                            items = uiState.allVideos,
+                                            key = { video -> video.id }
+                                        ) { video ->
+                                            VideoListItem(
+                                                video = video,
+                                                onClick = { onRecentVideoClick(video.uri, video.title) }
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    LazyColumn(
+                                        state = lazyListState,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .thinScrollbar(state = lazyListState, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                                        contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
+                                    ) {
+                                        items(
+                                            items = uiState.allVideos,
+                                            key = { video -> video.id }
+                                        ) { video ->
+                                            VideoListItem(
+                                                video = video,
+                                                onClick = { onRecentVideoClick(video.uri, video.title) }
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                if (isGridView) {
+                                    LazyVerticalGrid(
+                                        state = lazyGridState,
+                                        columns = GridCells.Fixed(2),
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp, start = 8.dp, end = 8.dp)
+                                    ) {
+                                        items(
+                                            items = uiState.folders,
+                                            key = { folder -> folder.path }
+                                        ) { folder ->
+                                            FolderGridCard(
+                                                folder = folder,
+                                                visibleFields = uiState.visibleFields,
+                                                onClick = { onFolderClick(folder.path) }
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    LazyColumn(
+                                        state = lazyListState,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .thinScrollbar(state = lazyListState, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                                        contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
+                                    ) {
+                                        items(
+                                            items = uiState.folders,
+                                            key = { folder -> folder.path }
+                                        ) { folder ->
+                                            FolderCard(
+                                                folder = folder,
+                                                visibleFields = uiState.visibleFields,
+                                                onClick = { onFolderClick(folder.path) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Thin Circular Fast-Scroll Indicator Badge
+                        if (lazyListState.isScrollInProgress) {
+                            val firstIdx = lazyListState.firstVisibleItemIndex
+                            val totalCount = lazyListState.layoutInfo.totalItemsCount
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(top = 16.dp, end = 16.dp)
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "${firstIdx + 1}/$totalCount",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }
                     }
 
-                    // Circular Floating Action Button in bottom-left corner
+                    // Circular Floating Action Button
                     FloatingActionButton(
                         onClick = onPlayButtonClick,
                         modifier = Modifier
@@ -168,14 +312,15 @@ fun HomeScreen(
             layoutMode = uiState.layoutMode,
             visibleFields = uiState.visibleFields,
             onlyForFolderList = uiState.onlyForFolderList,
+            showAudioFiles = uiState.showAudioFiles,
             onDismiss = { showSortSheet = false },
             onSortByChanged = { viewModel.setSortBy(it) },
             onSortAscendingChanged = { viewModel.setSortAscending(it) },
             onViewModeChanged = { viewModel.setViewMode(it) },
             onLayoutModeChanged = { viewModel.setLayoutMode(it) },
             onVisibleFieldsChanged = { viewModel.setVisibleFields(it) },
-            onOnlyForFolderListChanged = { viewModel.setOnlyForFolderList(it) }
+            onOnlyForFolderListChanged = { viewModel.setOnlyForFolderList(it) },
+            onShowAudioFilesChanged = { viewModel.setShowAudioFiles(it) }
         )
     }
 }
-

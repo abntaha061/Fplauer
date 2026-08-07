@@ -1,9 +1,11 @@
 package com.finalplayer.app.ui.home
 
 import com.finalplayer.app.domain.model.VideoFolder
+import com.finalplayer.app.domain.model.VideoItem
 
 data class HomeUiState(
     val folders: List<VideoFolder> = emptyList(),
+    val allVideos: List<VideoItem> = emptyList(),
     val isLoading: Boolean = false,
     val selectedTab: HomeTab = HomeTab.HOME,
     val sortBy: String = "title",
@@ -11,11 +13,14 @@ data class HomeUiState(
     val viewMode: String = "folder",
     val layoutMode: String = "list",
     val visibleFields: Set<String> = setOf("Path", "Folder Size", "Total Media"),
-    val onlyForFolderList: Boolean = false
+    val onlyForFolderList: Boolean = false,
+    val showAudioFiles: Boolean = false
 )
 
 enum class HomeTab {
+    NETWORK,
     PLAYLISTS,
     RECENTS,
+    SHORTS,
     HOME
 }

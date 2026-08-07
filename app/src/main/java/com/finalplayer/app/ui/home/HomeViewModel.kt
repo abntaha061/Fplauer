@@ -38,38 +38,54 @@ class HomeViewModel(
         viewModelScope.launch {
             combine(
                 videoRepository.getAllFolders(),
+                getVideoLibraryUseCase(),
                 sortPreferences.sortBy.asFlow(),
                 sortPreferences.sortAscending.asFlow(),
                 sortPreferences.viewMode.asFlow(),
                 sortPreferences.layoutMode.asFlow(),
                 sortPreferences.visibleFields.asFlow(),
-                sortPreferences.onlyForFolderList.asFlow()
+                sortPreferences.onlyForFolderList.asFlow(),
+                sortPreferences.showAudioFiles.asFlow()
             ) { args ->
                 @Suppress("UNCHECKED_CAST")
                 val folders = args[0] as? List<com.finalplayer.app.domain.model.VideoFolder> ?: emptyList()
-                val sortBy = args[1] as? String ?: "title"
-                val ascending = args[2] as? Boolean ?: true
-                val viewMode = args[3] as? String ?: "folder"
-                val layoutMode = args[4] as? String ?: "list"
                 @Suppress("UNCHECKED_CAST")
-                val fields = args[5] as? Set<String> ?: emptySet()
-                val onlyFolderList = args[6] as? Boolean ?: false
+                val videos = args[1] as? List<VideoItem> ?: emptyList()
+                val sortBy = args[2] as? String ?: "title"
+                val ascending = args[3] as? Boolean ?: true
+                val viewMode = args[4] as? String ?: "folder"
+                val layoutMode = args[5] as? String ?: "list"
+                @Suppress("UNCHECKED_CAST")
+                val fields = args[6] as? Set<String> ?: emptySet()
+                val onlyFolderList = args[7] as? Boolean ?: false
+                val showAudioFiles = args[8] as? Boolean ?: false
 
-                val sorted = when (sortBy) {
-                    "date" -> folders.sortedBy { it.path }
-                    "size" -> folders.sortedBy { it.videoCount }
+                val sortedFolders = when (sortBy) {
+                    "date" -> folders.sortedBy { it.lastModified }
+                    "size" -> folders.sortedBy { it.totalSizeBytes }
+                    "duration" -> folders.sortedBy { it.totalDuration }
                     else -> folders.sortedBy { it.name.lowercase() }
                 }
-                val finalFolders = if (ascending) sorted else sorted.reversed()
+                val finalFolders = if (ascending) sortedFolders else sortedFolders.reversed()
+
+                val sortedVideos = when (sortBy) {
+                    "date" -> videos.sortedBy { it.dateAdded }
+                    "size" -> videos.sortedBy { it.sizeBytes }
+                    "duration" -> videos.sortedBy { it.duration }
+                    else -> videos.sortedBy { it.title.lowercase() }
+                }
+                val finalVideos = if (ascending) sortedVideos else sortedVideos.reversed()
 
                 _uiState.value.copy(
                     folders = finalFolders,
+                    allVideos = finalVideos,
                     sortBy = sortBy,
                     sortAscending = ascending,
                     viewMode = viewMode,
                     layoutMode = layoutMode,
                     visibleFields = fields,
-                    onlyForFolderList = onlyFolderList
+                    onlyForFolderList = onlyFolderList,
+                    showAudioFiles = showAudioFiles
                 )
             }.collect { newState ->
                 _uiState.value = newState
@@ -103,6 +119,10 @@ class HomeViewModel(
 
     fun setOnlyForFolderList(only: Boolean) {
         viewModelScope.launch { sortPreferences.onlyForFolderList.set(only) }
+    }
+
+    fun setShowAudioFiles(show: Boolean) {
+        viewModelScope.launch { sortPreferences.showAudioFiles.set(show) }
     }
 
     fun refreshVideos() {

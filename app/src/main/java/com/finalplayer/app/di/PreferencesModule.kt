@@ -9,6 +9,7 @@ import com.finalplayer.app.data.preferences.AudioPreferences
 import com.finalplayer.app.data.preferences.DecoderPreferences
 import com.finalplayer.app.data.preferences.GesturePreferences
 import com.finalplayer.app.data.preferences.OnboardingPreferences
+import com.finalplayer.app.data.preferences.PlayerLayoutPreferences
 import com.finalplayer.app.data.preferences.PlayerPreferences
 import com.finalplayer.app.data.preferences.SortPreferences
 import com.finalplayer.app.data.preferences.SubtitlesPreferences
@@ -22,6 +23,7 @@ val preferencesModule = module {
 
     single { OnboardingPreferences(get()) }
     single { PlayerPreferences(get()) }
+    single { PlayerLayoutPreferences(get()) }
     single { SubtitlesPreferences(get()) }
     single { AudioPreferences(get()) }
     single { DecoderPreferences(get()) }

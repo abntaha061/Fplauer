@@ -11,9 +11,11 @@ import com.finalplayer.app.data.preferences.OnboardingPreferences
 import com.finalplayer.app.data.repository.MediaStoreVideoScanner
 import com.finalplayer.app.data.repository.NetworkSourceRepositoryImpl
 import com.finalplayer.app.data.repository.PlaybackRepositoryImpl
+import com.finalplayer.app.data.repository.PlaylistRepositoryImpl
 import com.finalplayer.app.data.repository.VideoRepositoryImpl
 import com.finalplayer.app.domain.repository.NetworkSourceRepository
 import com.finalplayer.app.domain.repository.PlaybackRepository
+import com.finalplayer.app.domain.repository.PlaylistRepository
 import com.finalplayer.app.domain.repository.VideoRepository
 import com.finalplayer.app.domain.usecase.BuildStreamUrlUseCase
 import com.finalplayer.app.domain.usecase.ConnectToNetworkSourceUseCase
@@ -27,6 +29,8 @@ import com.finalplayer.app.player.core.MPVController
 import com.finalplayer.app.ui.browser.NetworkBrowserViewModel
 import com.finalplayer.app.ui.home.HomeViewModel
 import com.finalplayer.app.ui.onboarding.OnboardingViewModel
+import com.finalplayer.app.ui.playlists.PlaylistViewModel
+import com.finalplayer.app.ui.recents.RecentsViewModel
 import com.finalplayer.app.ui.search.SearchViewModel
 import com.finalplayer.app.ui.settings.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
@@ -53,6 +57,7 @@ val appModule = module {
     single { MediaStoreVideoScanner(androidContext()) }
     single<VideoRepository> { VideoRepositoryImpl(get(), get()) }
     single<PlaybackRepository> { PlaybackRepositoryImpl(get()) }
+    single<PlaylistRepository> { PlaylistRepositoryImpl(androidContext(), get(), get()) }
     single<NetworkSourceRepository> { NetworkSourceRepositoryImpl(get(), get()) }
 
     // MPV Player Controller
@@ -81,5 +86,7 @@ val appModule = module {
     viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
     viewModel { NetworkBrowserViewModel(get(), get()) }
     viewModel { SearchViewModel(get()) }
+    viewModel { RecentsViewModel(get(), get()) }
+    viewModel { PlaylistViewModel(get()) }
 }
 
