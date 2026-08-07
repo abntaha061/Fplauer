@@ -1,5 +1,6 @@
 package com.finalplayer.app.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
@@ -31,10 +33,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.finalplayer.app.domain.model.VideoItem
+import com.finalplayer.app.ui.components.VideoStatusBadge
+import com.finalplayer.app.ui.components.VideoThumbnailImage
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
@@ -51,6 +56,8 @@ fun FolderDetailScreen(
 ) {
     val videos by viewModel.getVideosInFolder(folderPath)
         .collectAsState(initial = emptyList())
+    val playedVideoIds by viewModel.playedVideoIds
+        .collectAsState(initial = emptySet())
 
     val folderName = folderPath.substringAfterLast("/").ifEmpty { "الفولدر" }
     val listState = rememberLazyListState()
@@ -91,6 +98,7 @@ fun FolderDetailScreen(
                 items(videos, key = { it.id }) { video ->
                     VideoListItem(
                         video = video,
+                        isOpened = playedVideoIds.contains(video.id),
                         onClick = { onVideoClick(video) }
                     )
                 }
@@ -102,6 +110,7 @@ fun FolderDetailScreen(
 @Composable
 fun VideoListItem(
     video: VideoItem,
+    isOpened: Boolean = false,
     onClick: () -> Unit
 ) {
     Card(
@@ -117,12 +126,26 @@ fun VideoListItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Movie,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .width(76.dp)
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                VideoThumbnailImage(
+                    videoUri = video.uri,
+                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = video.title
+                )
+
+                VideoStatusBadge(
+                    isOpened = isOpened,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(2.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

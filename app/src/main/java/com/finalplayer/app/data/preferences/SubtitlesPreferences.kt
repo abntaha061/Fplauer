@@ -53,6 +53,19 @@ class SubtitlesPreferences(private val dataStore: DataStore<Preferences>) {
     val font                 = pref(FONT, "")
     val shadowOffset         = pref(SHADOW_OFFSET, 0)
 
+    val autoLoadSubtitles    = pref(booleanPreferencesKey("sub_auto_load"), true)
+    val disableByDefault     = pref(booleanPreferencesKey("sub_disable_by_default"), false)
+    val openInVideoLocation  = pref(booleanPreferencesKey("sub_open_video_loc"), false)
+    val defaultFolder        = pref(stringPreferencesKey("sub_default_folder"), "")
+    val fontsFolder          = pref(stringPreferencesKey("sub_fonts_folder"), "")
+    val saveLocation         = pref(stringPreferencesKey("sub_save_location"), "")
+    val subtitleSources      = pref(stringPreferencesKey("sub_sources"), "All,SubDL,Subf2m,OpenSubtitles,Podnapisi,Gestdown,AnimeTosho")
+    val searchLanguages      = pref(stringPreferencesKey("sub_search_langs"), "English")
+    val hearingImpaired      = pref(booleanPreferencesKey("sub_hearing_impaired"), false)
+    val preferredFormats     = pref(stringPreferencesKey("sub_preferred_formats"), "ASS, SSA, SRT, VTT")
+    val preferredEncodings   = pref(stringPreferencesKey("sub_preferred_encodings"), "Unicode (UTF-8)")
+    val wyzieApiKey          = pref(stringPreferencesKey("sub_wyzie_api_key"), "")
+
     private fun <T> pref(key: Preferences.Key<T>, default: T): Preference<T> =
         DataStorePreference(dataStore, key, default)
 }

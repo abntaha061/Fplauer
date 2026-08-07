@@ -195,6 +195,7 @@ fun HomeScreen(
                                         ) { video ->
                                             VideoListItem(
                                                 video = video,
+                                                isOpened = uiState.playedVideoIds.contains(video.id),
                                                 onClick = { onRecentVideoClick(video.uri, video.title) }
                                             )
                                         }
@@ -213,6 +214,7 @@ fun HomeScreen(
                                         ) { video ->
                                             VideoListItem(
                                                 video = video,
+                                                isOpened = uiState.playedVideoIds.contains(video.id),
                                                 onClick = { onRecentVideoClick(video.uri, video.title) }
                                             )
                                         }

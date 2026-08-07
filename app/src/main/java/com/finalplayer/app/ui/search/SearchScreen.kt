@@ -1,6 +1,8 @@
 package com.finalplayer.app.ui.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
@@ -34,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -45,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.finalplayer.app.domain.model.VideoFolder
 import com.finalplayer.app.domain.model.VideoItem
+import com.finalplayer.app.ui.components.VideoStatusBadge
+import com.finalplayer.app.ui.components.VideoThumbnailImage
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -243,11 +249,26 @@ fun SearchResultVideoCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Movie,
-                contentDescription = "Video",
-                tint = MaterialTheme.colorScheme.secondary
-            )
+            Box(
+                modifier = Modifier
+                    .width(76.dp)
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                VideoThumbnailImage(
+                    videoUri = video.uri,
+                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = video.title
+                )
+
+                VideoStatusBadge(
+                    isOpened = false, // default or status badge
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(2.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 HighlightedText(

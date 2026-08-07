@@ -22,6 +22,12 @@ class PlaybackRepositoryImpl(
         }
     }
 
+    override fun getAllProgress(): Flow<List<PlaybackProgress>> {
+        return playbackProgressDao.getAllProgress().map { list ->
+            list.map { it.toDomainModel() }
+        }
+    }
+
     override fun getRecentlyPlayed(limit: Int): Flow<List<PlaybackProgress>> {
         return playbackProgressDao.getRecentlyPlayed(limit).map { list ->
             list.map { it.toDomainModel() }

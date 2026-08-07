@@ -53,6 +53,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finalplayer.app.domain.model.RecentVideoItem
+import com.finalplayer.app.ui.components.VideoStatusBadge
+import com.finalplayer.app.ui.components.VideoThumbnailImage
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
@@ -320,19 +322,25 @@ private fun RecentVideoCard(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    modifier = Modifier.size(48.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
+                Box(
+                    modifier = Modifier
+                        .width(76.dp)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
+                    VideoThumbnailImage(
+                        videoUri = item.video.uri,
+                        modifier = Modifier.fillMaxSize(),
+                        contentDescription = item.video.title
+                    )
+
+                    VideoStatusBadge(
+                        isOpened = true,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(2.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))

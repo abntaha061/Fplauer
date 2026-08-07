@@ -6,6 +6,7 @@ import com.finalplayer.app.domain.model.VideoItem
 data class HomeUiState(
     val folders: List<VideoFolder> = emptyList(),
     val allVideos: List<VideoItem> = emptyList(),
+    val playedVideoIds: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val selectedTab: HomeTab = HomeTab.HOME,
     val sortBy: String = "title",

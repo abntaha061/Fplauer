@@ -15,6 +15,9 @@ interface PlaybackProgressDao {
     @Query("SELECT * FROM playback_progress WHERE videoId = :videoId")
     fun getProgress(videoId: String): Flow<PlaybackProgressEntity?>
 
+    @Query("SELECT * FROM playback_progress")
+    fun getAllProgress(): Flow<List<PlaybackProgressEntity>>
+
     @Query("SELECT * FROM playback_progress ORDER BY lastPlayedTimestamp DESC LIMIT :limit")
     fun getRecentlyPlayed(limit: Int): Flow<List<PlaybackProgressEntity>>
 

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -49,14 +48,6 @@ fun HomeTopBar(
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                IconButton(onClick = onNetworkSourcesClick) {
-                    Icon(
-                        imageVector = Icons.Default.Dns,
-                        contentDescription = "Network Sources",
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }

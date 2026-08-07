@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.finalplayer.app.data.preferences.SortPreferences
 import com.finalplayer.app.domain.model.VideoItem
+import com.finalplayer.app.domain.model.PlaybackProgress
+import com.finalplayer.app.domain.repository.PlaybackRepository
 import com.finalplayer.app.domain.repository.VideoRepository
 import com.finalplayer.app.domain.usecase.GetVideoLibraryUseCase
 import com.finalplayer.app.domain.usecase.GetVideosByFolderUseCase
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -21,7 +24,8 @@ class HomeViewModel(
     private val scanForVideosUseCase: ScanForVideosUseCase,
     private val getVideosByFolderUseCase: GetVideosByFolderUseCase,
     private val videoRepository: VideoRepository,
-    private val sortPreferences: SortPreferences
+    private val sortPreferences: SortPreferences,
+    private val playbackRepository: PlaybackRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -32,6 +36,12 @@ class HomeViewModel(
     init {
         observeFoldersAndSort()
         refreshVideos()
+    }
+
+    val playedVideoIds: Flow<Set<String>> = playbackRepository.getAllProgress().map { list ->
+        list.filter { it.lastPlayedTimestamp > 0 || it.positionMs > 0 }
+            .map { it.videoId }
+            .toSet()
     }
 
     private fun observeFoldersAndSort() {
@@ -45,7 +55,8 @@ class HomeViewModel(
                 sortPreferences.layoutMode.asFlow(),
                 sortPreferences.visibleFields.asFlow(),
                 sortPreferences.onlyForFolderList.asFlow(),
-                sortPreferences.showAudioFiles.asFlow()
+                sortPreferences.showAudioFiles.asFlow(),
+                playbackRepository.getAllProgress()
             ) { args ->
                 @Suppress("UNCHECKED_CAST")
                 val folders = args[0] as? List<com.finalplayer.app.domain.model.VideoFolder> ?: emptyList()
@@ -59,6 +70,12 @@ class HomeViewModel(
                 val fields = args[6] as? Set<String> ?: emptySet()
                 val onlyFolderList = args[7] as? Boolean ?: false
                 val showAudioFiles = args[8] as? Boolean ?: false
+                @Suppress("UNCHECKED_CAST")
+                val progressList = args[9] as? List<PlaybackProgress> ?: emptyList()
+
+                val playedIds = progressList.filter { it.lastPlayedTimestamp > 0 || it.positionMs > 0 }
+                    .map { it.videoId }
+                    .toSet()
 
                 val sortedFolders = when (sortBy) {
                     "date" -> folders.sortedBy { it.lastModified }
@@ -79,6 +96,7 @@ class HomeViewModel(
                 _uiState.value.copy(
                     folders = finalFolders,
                     allVideos = finalVideos,
+                    playedVideoIds = playedIds,
                     sortBy = sortBy,
                     sortAscending = ascending,
                     viewMode = viewMode,

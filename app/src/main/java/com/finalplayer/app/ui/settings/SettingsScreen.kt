@@ -70,6 +70,7 @@ import com.finalplayer.app.ui.settings.tabs.AudioSettingsTab
 import com.finalplayer.app.ui.settings.tabs.DecoderSettingsTab
 import com.finalplayer.app.ui.settings.tabs.GesturesSettingsTab
 import com.finalplayer.app.ui.settings.tabs.PlayerSettingsTab
+import com.finalplayer.app.ui.settings.tabs.SubtitlesSettingsTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,7 +129,7 @@ fun SettingsScreen(
         }
         "subtitles" -> {
             SubScreenContainer(title = "الترجمات", onBack = { currentSubScreen = null }) {
-                SubtitlesSettingsContent()
+                SubtitlesSettingsTab()
             }
         }
         "audio" -> {

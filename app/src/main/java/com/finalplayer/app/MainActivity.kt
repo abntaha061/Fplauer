@@ -61,7 +61,13 @@ class MainActivity : ComponentActivity() {
                     val onboardingViewModel: OnboardingViewModel = koinViewModel()
                     val homeViewModel: HomeViewModel = koinViewModel()
 
-                    val hasCompletedOnboarding by onboardingViewModel.hasCompletedOnboarding.collectAsState()
+                    val hasCompletedOnboardingState by onboardingViewModel.hasCompletedOnboarding.collectAsState()
+
+                    if (hasCompletedOnboardingState == null) {
+                        return@Surface
+                    }
+
+                    val hasCompletedOnboarding = hasCompletedOnboardingState == true
                     val navController = rememberNavController()
 
                     val startDestination = if (hasCompletedOnboarding) "home" else "onboarding"
