@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finalplayer.app.domain.model.VideoFolder
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,12 +45,8 @@ fun FolderCard(
     unwatchedCount: Int = 3, // Mock unwatched count for badge demo
     onClick: () -> Unit = {}
 ) {
-    val showFullName = visibleFields.isEmpty() || visibleFields.contains("Full Name")
-    val showPath = visibleFields.contains("Path")
-    val showDuration = visibleFields.isEmpty() || visibleFields.contains("Total Duration")
-    val showSize = visibleFields.isEmpty() || visibleFields.contains("Folder Size") || visibleFields.contains("File Size")
-    val showVideoCount = visibleFields.isEmpty() || visibleFields.contains("Total Videos") || visibleFields.contains("Total Media")
-    val showDate = visibleFields.isEmpty() || visibleFields.contains("Date")
+    val cleanPath = folder.path.replace("//", "/").trimEnd('/')
+    val displayName = folder.name.ifEmpty { File(cleanPath).name }
 
     Card(
         modifier = Modifier
@@ -73,52 +70,33 @@ fun FolderCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = if (showFullName && showPath) folder.path else folder.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = displayName,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
 
-                if (showPath && !showFullName) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = folder.path,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp
-                    )
-                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = cleanPath,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-                if (showDuration || showSize || showVideoCount) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    // Chips Row
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (showDuration) {
-                            InfoChip(text = formatDuration(folder.totalDuration))
-                        }
-                        if (showSize) {
-                            InfoChip(text = formatFileSize(folder.totalSizeBytes))
-                        }
-                        if (showVideoCount) {
-                            InfoChip(text = "Videos ${folder.videoCount}")
-                        }
-                    }
-                }
-
-                if (showDate) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Last modified
-                    Text(
-                        text = "Modified: ${formatDate(folder.lastModified)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp
-                    )
+                // Chips Row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    InfoChip(text = formatDate(folder.lastModified))
+                    InfoChip(text = formatFileSize(folder.totalSizeBytes))
+                    InfoChip(text = "Items ${folder.videoCount}")
                 }
             }
 
@@ -132,13 +110,13 @@ fun FolderCard(
                     modifier = Modifier
                         .size(56.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.tertiary),
+                        .background(MaterialTheme.colorScheme.tertiaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Folder,
                         contentDescription = "Folder",
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -147,7 +125,7 @@ fun FolderCard(
                     Box(
                         modifier = Modifier
                             .size(20.dp)
-                            .background(Color(0xFFE53935), CircleShape),
+                            .background(Color(0xFFD32F2F), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -170,12 +148,8 @@ fun FolderGridCard(
     unwatchedCount: Int = 3,
     onClick: () -> Unit = {}
 ) {
-    val showFullName = visibleFields.isEmpty() || visibleFields.contains("Full Name")
-    val showPath = visibleFields.contains("Path")
-    val showDuration = visibleFields.isEmpty() || visibleFields.contains("Total Duration")
-    val showSize = visibleFields.isEmpty() || visibleFields.contains("Folder Size") || visibleFields.contains("File Size")
-    val showVideoCount = visibleFields.isEmpty() || visibleFields.contains("Total Videos") || visibleFields.contains("Total Media")
-    val showDate = visibleFields.isEmpty() || visibleFields.contains("Date")
+    val cleanPath = folder.path.replace("//", "/").trimEnd('/')
+    val displayName = folder.name.ifEmpty { File(cleanPath).name }
 
     Card(
         modifier = Modifier
@@ -201,13 +175,13 @@ fun FolderGridCard(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.tertiary),
+                        .background(MaterialTheme.colorScheme.tertiaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Folder,
                         contentDescription = "Folder",
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -216,7 +190,7 @@ fun FolderGridCard(
                     Box(
                         modifier = Modifier
                             .size(20.dp)
-                            .background(Color(0xFFE53935), CircleShape),
+                            .background(Color(0xFFD32F2F), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -232,7 +206,7 @@ fun FolderGridCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (showFullName && showPath) folder.path else folder.name,
+                text = displayName,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -240,25 +214,13 @@ fun FolderGridCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            if (showDuration || showSize || showVideoCount) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (showVideoCount) InfoChip(text = "${folder.videoCount} videos")
-                    if (showSize) InfoChip(text = formatFileSize(folder.totalSizeBytes))
-                }
-            }
-
-            if (showDate) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatDate(folder.lastModified),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 10.sp
-                )
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                InfoChip(text = "${folder.videoCount} items")
+                InfoChip(text = formatFileSize(folder.totalSizeBytes))
             }
         }
     }
