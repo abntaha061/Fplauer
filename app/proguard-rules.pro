@@ -14,10 +14,37 @@
 # Kotlin Coroutines
 -keepclassmembers class kotlinx.coroutines.** { *; }
 -dontwarn kotlinx.coroutines.**
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
 
-# Data Classes & Domain Models
+# Data Classes & Domain Models (Broad Protection)
 -keep class com.finalplayer.app.domain.model.** { *; }
 -keepclassmembers class com.finalplayer.app.domain.model.** { *; }
+-keep class **.*Model { *; }
+-keep class **.*Entity { *; }
+-keep class **.*Dto { *; }
+-keep class **.*Response { *; }
+
+# ViewModels (Crucial for DI and Navigation)
+-keep class * extends androidx.lifecycle.ViewModel { *; }
+
+# ----------------------------------------------------------------------------
+# CRUCIAL: Protect Parcelable and Serializable classes for Navigation
+# ----------------------------------------------------------------------------
+-keep class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator *;
+}
+
+-keepnames class * implements java.io.Serializable
+-keepclassmembers class * implements java.io.Serializable {
+    static final long serialVersionUID;
+    private static final java.io.ObjectStreamField[] serialPersistentFields;
+    !static !transient <fields>;
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
+}
 
 # Room Database
 -keep class * extends androidx.room.RoomDatabase
